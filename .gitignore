@@ -1,0 +1,8 @@
+/data/*
+!/data/config*
+!data/receptor/*.py
+!data/ligands/*.py
+.spyproject
+.vscode
+
+
