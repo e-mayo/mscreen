@@ -10,7 +10,7 @@ import sys
 import re
 from time import time
 from pathlib import Path
-from shutil import copy, rmtree
+from shutil import copy, rmtree, which
 
 from screening.utils import rename_old
 from screening import prepare_vina
@@ -126,8 +126,11 @@ class Screening:
     def __init__(self, ligands, receptors,
                  out='out',
                  conf='conf.txt',
-                 backend="qvina-w", prepare=False,
-                 verbose=False, log_file=None):
+                 backend="qvina-w",
+                 prepare=False,
+                 verbose=False,
+                 log_file=None,
+                 exe_file='exe.paths'):
 
         self.SUPPORTED_FORMATS = (".mol2", ".pdbqt",
                                   ".pdb", ".pdbqt",
@@ -151,6 +154,18 @@ class Screening:
         # self.prepared_ligand_folder = prepared_ligand_folder
         # self.prepared_receptors_folder = prepared_receptors_folder
         self.log_file = log_file
+        self.exe = self.read_exeFile(Path(exe_file))
+
+    def read_exeFile(self, file):
+        exe_dict = dict()
+        with open(file, 'r') as f:
+            for line in f.readlines():
+                if line.startswith('#'):
+                    continue
+                line = line.replace('\n', '')
+                program, path = line.split('=')
+                exe_dict.setdefault(program,path)        
+        return exe_dict
 
     def logger(self, line):
         if not self.log_file:
@@ -283,7 +298,45 @@ class Screening:
             print(printout)
             raise Exception(printout)
 
-    def _get_executable_(self, windows_path, linux_path):
+    def _get_excutable_path_(self, exe_name):
+        # from distutils.spawn import find_executable
+        if which(exe_name):
+            return exe_name
+        else:
+            return False
+
+    def _get_executable_user_(self, exe_name):
+        exe_path = Path(self.exe.get(exe_name))
+        if not exe_name:
+            return False
+        if exe_path.exists():
+            return exe_path
+        else:
+            return False
+
+    def _get_executable_dist_(self, exe_name):
+
+        bin_path = Path(os.path.realpath(
+            "docking_executable")).parent / 'screening' / "docking_executable"
+
+        linux_path = bin_path / "linux" / exe_name
+        windows_path = bin_path / "win" / exe_name
+
+        if sys.platform == "linux" or sys.platform == "linux2":
+            docking_executable = linux_path
+            self.check_program_executable(docking_executable)
+            return docking_executable
+
+        elif sys.platform == "win32":
+            docking_executable = windows_path
+            self.check_program_executable(docking_executable)
+            # print(docking_executable)
+            return docking_executable
+
+        else:
+            return False
+
+    def _get_executable_(self, exe_name):
         """
         Get the rigth executable.
 
@@ -305,17 +358,22 @@ class Screening:
             DESCRIPTION.
 
         """
-        if sys.platform == "linux" or sys.platform == "linux2":
-            docking_executable = linux_path
-            self.check_program_executable(docking_executable)
-            return docking_executable
-        elif sys.platform == "win32":
-            docking_executable = windows_path
-            self.check_program_executable(docking_executable)
-            # print(docking_executable)
-            return docking_executable
-        else:
-            raise Exception("This OS is currently not supported")
+        # exe = self._get_excutable_path_(exe_name)
+        # if exe:
+        #     if self.verbose:
+        #         print(f'Using {exe}')
+        #     return exe
+        exe = self._get_executable_user_(exe_name)
+        if exe:
+            if self.verbose:
+                print(f'Using {exe}')
+            return exe
+        exe = self._get_executable_dist_(exe_name)
+        if exe:
+            if self.verbose:
+                print(f'Using {exe}')
+            return exe
+        raise FileNotFoundError('Not excecutable found')
 
     def fix_multiplefragment(self, mol_file):
         with open(mol_file, 'r+') as f:
@@ -400,13 +458,8 @@ class VinaScreening(Screening):
             "smina": "smina",  # linux
         }
 
-        docking_bin_path = Path(os.path.realpath(
-            "docking_executable")).parent / 'screening' / "docking_executable"
-        linux_path = docking_bin_path / "linux" / docking_engine[backend]
-        windows_path = docking_bin_path / "win" / \
-            f"{docking_engine[backend]}.exe"
-
-        return self._get_executable_(windows_path, linux_path)
+        exe_name = docking_engine[backend]
+        return self._get_executable_(exe_name)
 
     def run_vina(self, out_path, lig_path, rec_path):
 
@@ -519,14 +572,8 @@ class PlantsScreening(Screening):
             "plants": "plants",  # linux & win
         }
 
-        docking_bin_path = Path(
-            "docking_executable").parent / 'screening' / "docking_executable"
-        docking_bin_path = docking_bin_path.resolve()
-        print(f"docking_bin_path:{docking_bin_path}")
-        linux_path = docking_bin_path / "linux" / docking_engine[backend]
-        windows_path = docking_bin_path / "win" / \
-            f"{docking_engine[backend]}.exe"
-        return self._get_executable_(windows_path, linux_path)
+        exe_name = docking_engine[backend]
+        return self._get_executable_(exe_name)
 
     def run_plants(self, out_path, lig_path, rec_path):
 
@@ -692,12 +739,8 @@ class LedockScreening(Screening):
             "ledock": "ledock",  # linux & win
         }
 
-        docking_bin_path = Path(os.path.realpath(
-            "docking_executable")).parent / "docking_executable"
-        linux_path = docking_bin_path / "linux" / docking_engine[backend]
-        windows_path = docking_bin_path / "win" / \
-            f"{docking_engine[backend]}.exe"
-        return self._get_executable_(windows_path, linux_path)
+        exe_name = docking_engine[backend]
+        return self._get_executable_(exe_name)
 
     def run_ledock(self, rec_path):
 
@@ -899,52 +942,61 @@ if __name__ == "__main__":
         # prepared_receptors = Path(
         # "../../data/prepared/prepared_receptors_vina")
         out = Path("../../data/out")
-        conf = Path("../../data/conf.txt")
+        conf = Path("../../data/config_vina_ex1.txt")
         backend = "vina"
         s = VinaScreening(
             ligands,
             receptors,
             out,
-            # conf,
+            conf,
             backend,
+            prepare=True,
             # prepared_ligand_folder=prepared_ligands,
             # prepared_receptors_folder=prepared_receptors,
+            exe_file='../exe.paths'
         )
-        s.init_screening()
-        s.prepared_folder('vina')
-        s.prepare_ligands()
-        s.prepare_receptors()
-        s.prepare_screening()
+        # s.init_screening()
+        # s.prepared_folder('vina')
+        # s.prepare_ligands()
+        # s.prepare_receptors()
+        # s.prepare_screening()
         # s.prepare_screening(verbose=1)
         s.get_docking_executable("vina")
         s.run_screening()
 
     # test_vina()
-
+#
     # %% =============================================================================
     # Plants test
     # =============================================================================
     def test_plants():
-        ligands = Path("../../data/PfA-M1_2a/ligands")
-        receptors = Path("../../data/PfA-M1_2a/receptor")
+        ligands = Path("../../data/ligands")
+        receptors = Path("../../data/receptor")
+        ligands = Path("../../data/ligands")
+        receptors = Path("../../data/receptor")
         # ligands = Path("../../data/prepared_ligands_plants")
         # receptors = Path("../../data/prepared_receptors_plants")
-        out = Path("../../data/prepare")
-        conf = Path("../../data/config_plants_speed2.txt")
+        out = Path("../../data/our-test-plants")
+        conf = Path("../../data/config_plants_speed4.txt")
         backend = "plants"
-        s = PlantsScreening(ligands, receptors, out, backend=backend)
-        s.init_screening()
-        s.prepared_folder('plants')
-        s.prepare_ligands()
-        s.prepare_receptors()
-        s.prepare_screening()
+        s = PlantsScreening(ligands, receptors, 
+                            out,
+                            conf=conf,
+                            backend=backend, verbose=True,
+                            prepare=True,
+                            exe_file='../exe.paths')
+        # s.init_screening()
+        # s.prepared_folder('plants')
+        # s.prepare_ligands()
+        # s.prepare_receptors()
+        # s.prepare_screening()
         # i = [l for l in ligands.iterdir()][0]
         # o = i.parent / f"{i.stem}-prep.mol2"
         # s.run_spores(i, o)
         # s.get_docking_executable("plants")
-        s.run_screening(prepare_structures=False)
+        s.run_screening(init_screening=True)
 
-    # test_plants()
+    test_plants()
 
     # %%===========================================================================
     # Ledock Test
