@@ -4,12 +4,12 @@ Created on Fri Aug 21 17:42:22 2020
 
 @author: lizet
 """
-import re
-import numpy as np
-import os
 from pathlib import Path
-from engine import *
+
+import numpy as np
 from LogFile import LogFile
+from engine import *
+
 
 class ScreeninResults():
     """
@@ -116,8 +116,7 @@ class ScreeninResults():
 if __name__ == '__main__':
 
     import argparse
-    import os
-    import sys
+
     # Create the parser
     my_parser = argparse.ArgumentParser(description='List the content of a folder')
 

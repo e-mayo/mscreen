@@ -5,14 +5,8 @@ Created on Sat Jun 06 02:00:33 2020
 @author: eduardo
 """
 
-from rdkit import Chem
-from rdkit.Chem import AllChem, Draw, Recap
-from rdkit.Chem import rdFMCS
-import re
 import numpy as np
-import os
-from pathlib import Path
-
+from rdkit.Chem import AllChem
 
 
 def calc_rms_matrix(mol_list):

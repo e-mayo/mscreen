@@ -50,7 +50,7 @@
 
             s.run_vina(self, 'out_path', 'lig_path', 'rec_path')
 
-        def test_run_screening_prepare_True():
+        def test_run_screening_prepare_true():
             s = VinaScreening(self.ligands, self.receptors,
                               self.out, self.backend, prepare=True)
             s.run_screening()

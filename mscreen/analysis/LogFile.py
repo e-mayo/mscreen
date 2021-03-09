@@ -5,8 +5,9 @@ Created on Fri Aug 21 17:18:00 2020
 @author: emayo
 """
 
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 
 class LogFile:

@@ -5,14 +5,10 @@ Created on Sat Jun 06 02:00:33 2020
 @author: eduardo
 """
 
-import re
-import numpy as np
-import os
 from pathlib import Path
-from engine import *
-from LogFile import LogFile
-from ScreeninResults import ScreeninResults
 
+import numpy as np
+from engine import *
 
 
 #%%

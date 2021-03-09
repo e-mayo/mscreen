@@ -4,8 +4,9 @@ Created on Sat Jun 06 02:00:33 2020
 
 @author: eduardo
 """
-from engine import *
 import argparse
+
+from engine import *
 
 my_parser = argparse.ArgumentParser(
     description='This program process the result of a vina screening done with mscreen')
