@@ -7,6 +7,7 @@ Created on Fri Oct 25 19:55:51 2019
 """
 # from analysis import analysis
 from screening.screen import vsprotocol
+from Analysis.analysis import vsanalyser
 
 # from analysis import analysis
 import argparse
@@ -17,11 +18,9 @@ import sys
 def pareser():
     my_parser = argparse.ArgumentParser(prog="mscreen", usage="%(prog)s [options]", description="Vina Screening")
 
-    # my_group = my_parser.add_mutually_exclusive_group(required=True)
-
-    # my_group.add_argument('-v', '--verbose', action='store_true')
-    # my_group.add_argument('-s', '--silent', action='store_true')
-
+    # subparsers = my_parser.add_subparsers()
+    
+    # subparsers.add_parser
     my_parser.add_argument(
         "pkg",
         metavar="pkg",
@@ -30,9 +29,7 @@ def pareser():
         action="store",
         choices=["screen", "analysis", "prepare"],
     )
-    # usage='%(prog)s screening -l ligand_forlder -r \
-    #     receptor_folder -o out  -c conf.txt /n\
-    #        %(prog)s analysis  -o out -r   ')
+
 
     my_parser.add_argument(
         "-l",
@@ -152,8 +149,42 @@ def pareser():
         default=None,
         required=False,
     )
-
+        
+    my_parser.add_argument(
+        "-vs",
+        "--vs_result",
+        metavar="analysis_input",
+        type=str,
+        help="The folder containing the virtual screening result",
+        # usage = '%(prog)s [-a full]  -o out\
+        # return a sdf file with all the information of the \
+        #     virtual screeing\n\
+        # %(prog)s [-a short]  -o out return a txt file with\
+        #     a vina score resume',
+        default=None,
+        required=False,
+    )
+        
+    my_parser.add_argument(
+        "-t",
+        "--type_of_analysis",
+        metavar="type_of_analysis",
+        type=str,
+        help="""The type of analysis to do. 
+                full  - return a sdf file with ligand propierties 
+                short - write a txt file with the ligand ranking""",
+        choices=["full", "short"],
+        # usage = '%(prog)s [-a full]  -o out\
+        # return a sdf file with all the information of the \
+        #     virtual screeing\n\
+        # %(prog)s [-a short]  -o out return a txt file with\
+        #     a vina score resume',
+        default=None,
+        required=False,
+    )
+        
     # my_group = my_parser.add_mutually_exclusive_group(required=True)
+    
 
     my_parser.add_argument("-v", "--verbose", action="store_true")
     # my_group.add_argument('-s', '--silent', action='store_true')
@@ -166,7 +197,7 @@ if __name__ == "__main__":
 
     from time import time
     import random
-
+    # print(args.pkg)
     args = pareser()
     if args.pkg == "prepare":
 
@@ -178,8 +209,6 @@ if __name__ == "__main__":
             args.conf,
             args.backend,
             args.prepare,
-            # args.prepared_receptors_folder,
-            # args.prepared_ligand_folder,
             args.verbose,
             args.log_file,
             args.exe,
@@ -195,19 +224,19 @@ if __name__ == "__main__":
             args.conf,
             args.backend,
             args.prepare,
-            # args.prepared_receptors_folder,
-            # args.prepared_ligand_folder,
             args.verbose,
             args.log_file,
             args.exe,
         )
         s.run_screening()
 
-    # elif args.pkg == 'analysis':
-    #     if args.analysis == 'full':
-    #         analysis.run_full_analysis(args.out)
-    #     if args.analysis  == 'short':
-    #         analysis.run_short_analysis(args.out)
+    elif args.pkg == 'analysis':
+        analyser = vsanalyser.get_analyzer(args.backend)
+        a = analyser(args.vs_result, args.vs_result, mode=args.type_of_analysis)
+        if args.type_of_analysis == 'full':
+            a.run_full_analysis()
+        if args.type_of_analysis  == 'short':
+            a.run_short_analysis()
 
 # %%
 # class Test_mscreen:
