@@ -6,9 +6,9 @@ Created on Fri Oct 25 19:55:51 2019
 """
 
 import os
-import shutil
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 
 
 class LogFile:

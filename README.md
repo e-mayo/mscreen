@@ -34,7 +34,7 @@ Wong, KM, Tai, HK, Siu, SWI. GWOVina: A grey wolf optimization approach to rigid
 
 * ### PSOVina
 Ng MC, Fong S, Siu SW. PSOVina: The hybrid particle swarm optimization algorithm for protein-ligand docking. J Bioinform Comput Biol. 2015 Jun;13(3):1541007. doi: 10.1142/S0219720015410073. Epub 2015 Feb 10. PMID: 25800162.
-* ## QVina-2.1
+* ### QVina-2.1
 “Fast, Accurate, and Reliable Molecular Docking with QuickVina 2” Amr Alhossary, Stephanus Daniel Handoko, Yuguang Mu, and Chee-Keong Kwoh. Bioinformatics (2015) 31 (13): 2214-2216. DOI:10.1093/bioinformatics/btv082
 * ### QVina-w
 “Protein-Ligand Blind Docking Using QuickVina-W With Inter-Process Spatio-Temporal Integration” Nafisa M. Hassan, Amr A. Alhossary, Yuguang Mu & Chee-Keong Kwoh. Nature Scientific Reports 7(1) (2017). DOI:10.1038/s41598-017-15571-7

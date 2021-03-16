@@ -123,18 +123,20 @@ class Screening:
     Templete class for all program-specific screening class 
     """
 
-    def __init__(self, ligands, receptors,
-                 out='out',
-                 conf='conf.txt',
-                 backend="qvina-w",
-                 prepare=False,
-                 verbose=False,
-                 log_file=None,
-                 exe_file='exe.paths'):
+    def __init__(
+        self,
+        ligands,
+        receptors,
+        out="out",
+        conf="conf.txt",
+        backend="qvina-w",
+        prepare=False,
+        verbose=False,
+        log_file=None,
+        exe_file="exe.paths",
+    ):
 
-        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt",
-                                  ".pdb", ".pdbqt",
-                                  ".cif", ".pqr")
+        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
 
         self.verbose = verbose
         self.backend = backend
@@ -154,17 +156,18 @@ class Screening:
         # self.prepared_ligand_folder = prepared_ligand_folder
         # self.prepared_receptors_folder = prepared_receptors_folder
         self.log_file = log_file
-        self.exe = self.read_exeFile(Path(exe_file))
+        if exe_file:
+            self.exe = self.read_exeFile(Path(exe_file))
 
     def read_exeFile(self, file):
         exe_dict = dict()
-        with open(file, 'r') as f:
+        with open(file, "r") as f:
             for line in f.readlines():
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
-                line = line.replace('\n', '')
-                program, path = line.split('=')
-                exe_dict.setdefault(program,path)        
+                line = line.replace("\n", "")
+                program, path = line.split("=")
+                exe_dict.setdefault(program, path)
         return exe_dict
 
     def logger(self, line):
@@ -174,17 +177,17 @@ class Screening:
             print(line)
         self.log_file = Path(self.log_file)
         if not self.log_file.exists():
-            with open(self.log_file, 'w') as f:
-                f.write('#Virtual screening logfile:\n')
-                f.write(f'#backend: {self.backend}\n')
-                f.write(f'#conf: {self.conf}\n')
-                f.write(f'#ligand_folder: {self.ligand_folder}\n')
-                f.write(f'#receptors_folder: {self.receptors_folder}\n')
-                f.write('program,receptor,ligand,time\n')
+            with open(self.log_file, "w") as f:
+                f.write("#Virtual screening logfile:\n")
+                f.write(f"#backend: {self.backend}\n")
+                f.write(f"#conf: {self.conf}\n")
+                f.write(f"#ligand_folder: {self.ligand_folder}\n")
+                f.write(f"#receptors_folder: {self.receptors_folder}\n")
+                f.write("program,receptor,ligand,time\n")
 
-        with open(self.log_file, 'r+') as f:
+        with open(self.log_file, "r+") as f:
             f.read()
-            f.write(f'{line}\n')
+            f.write(f"{line}\n")
         return line
 
     def prepared_folder(self, folder_name=None):
@@ -199,13 +202,11 @@ class Screening:
         else:
             folder_name = ""
 
-        self.prepared_ligand_folder = self.out_folder / \
-            f"prepared_ligands{folder_name}"
+        self.prepared_ligand_folder = self.out_folder / f"prepared_ligands{folder_name}"
         if not self.prepared_ligand_folder.exists():
             self.prepared_ligand_folder.mkdir()
 
-        self.prepared_receptors_folder = self.out_folder / \
-            f"prepared_receptors{folder_name}"
+        self.prepared_receptors_folder = self.out_folder / f"prepared_receptors{folder_name}"
         if not self.prepared_receptors_folder.exists():
             self.prepared_receptors_folder.mkdir()
 
@@ -306,6 +307,8 @@ class Screening:
             return False
 
     def _get_executable_user_(self, exe_name):
+        if not self.exe:
+            return None
         exe_path = Path(self.exe.get(exe_name))
         if not exe_name:
             return False
@@ -316,8 +319,7 @@ class Screening:
 
     def _get_executable_dist_(self, exe_name):
 
-        bin_path = Path(os.path.realpath(
-            "docking_executable")).parent / 'screening' / "docking_executable"
+        bin_path = Path(os.path.realpath("docking_executable")).parent / "screening" / "docking_executable"
 
         linux_path = bin_path / "linux" / exe_name
         windows_path = bin_path / "win" / exe_name
@@ -358,31 +360,31 @@ class Screening:
             DESCRIPTION.
 
         """
-        # exe = self._get_excutable_path_(exe_name)
-        # if exe:
-        #     if self.verbose:
-        #         print(f'Using {exe}')
-        #     return exe
+        exe = self._get_excutable_path_(exe_name)
+        if exe:
+            if self.verbose:
+                print(f"Using {exe}")
+            return exe
         exe = self._get_executable_user_(exe_name)
         if exe:
             if self.verbose:
-                print(f'Using {exe}')
+                print(f"Using {exe}")
             return exe
         exe = self._get_executable_dist_(exe_name)
         if exe:
             if self.verbose:
-                print(f'Using {exe}')
+                print(f"Using {exe}")
             return exe
-        raise FileNotFoundError('Not excecutable found')
+        raise FileNotFoundError("Not excecutable found")
 
     def fix_multiplefragment(self, mol_file):
-        with open(mol_file, 'r+') as f:
+        with open(mol_file, "r+") as f:
             mol_text = f.read()
-            p = re.compile('(\d\s\s)(\w{2,})', re.M | re.I)
+            p = re.compile("(\d\s\s)(\w{2,})", re.M | re.I)
             # lig_code = p.search(mol_text)[2]
-            lig_code = 'LIG'
-            nmol_text = p.sub(f'\g<1>{lig_code}', mol_text)
-        with open(mol_file, 'w') as f:
+            lig_code = "LIG"
+            nmol_text = p.sub(f"\g<1>{lig_code}", mol_text)
+        with open(mol_file, "w") as f:
             f.write(nmol_text)
         return nmol_text
 
@@ -439,8 +441,7 @@ class VinaScreening(Screening):
         None.
 
         """
-        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb",
-                                  ".pdbqt", ".cif", ".pqr")
+        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
         self.prepared_folder(folder_name="vina")
         self.prepare_receptors()
         self.prepare_ligands()
@@ -464,7 +465,7 @@ class VinaScreening(Screening):
     def run_vina(self, out_path, lig_path, rec_path):
 
         if self.conf.exists() == False:
-            print('Configuration file is required for virtual screening')
+            print("Configuration file is required for virtual screening")
             raise ValueError
         copy(self.conf, self.out_folder / "conf.txt")
         log = out_path / "{0}-log.txt".format(lig_path.stem)
@@ -488,7 +489,7 @@ class VinaScreening(Screening):
             self.init_screening()
 
         if self.prepare:
-            self.logger('#Preparing ligand and receptors')
+            self.logger("#Preparing ligand and receptors")
             self.prepare_screening()
 
         for rec in self.receptors:
@@ -504,8 +505,7 @@ class VinaScreening(Screening):
                 os.mkdir(out_path)
                 t0 = time()
                 self.run_vina(out_path, lig, rec)
-                self.logger(
-                    f'{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}')
+                self.logger(f"{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
     # def set_metalloprotein_charge(self,atomname,charge):
     # pass
@@ -527,7 +527,7 @@ class PlantsScreening(Screening):
         None.
 
         """
-        self.SUPPORTED_FORMATS = ['.mol2', '.pdb']
+        self.SUPPORTED_FORMATS = [".mol2", ".pdb"]
         self.prepared_folder(folder_name="plants")
         self.prepare_receptors()
         self.prepare_ligands()
@@ -556,12 +556,12 @@ class PlantsScreening(Screening):
             # .pdb .mol2 or .pdbqt
             if not self._check_format_(lig):
                 continue
-            if lig.suffix == '.mol2':
+            if lig.suffix == ".mol2":
                 self.fix_multiplefragment(lig)
             if self.verbose:
-                print(f'\n\npreparing ligand {lig.name}')
-            out = self.prepared_ligand_folder / f'{lig.stem}.mol2'
-            self.run_spores(lig, out, mode='complete')
+                print(f"\n\npreparing ligand {lig.name}")
+            out = self.prepared_ligand_folder / f"{lig.stem}.mol2"
+            self.run_spores(lig, out, mode="complete")
             ligands_prepared.append(out)
         self.ligands = ligands_prepared
 
@@ -577,8 +577,7 @@ class PlantsScreening(Screening):
 
     def run_plants(self, out_path, lig_path, rec_path):
 
-        conf_file = self.out_folder / rec_path.stem / \
-            f"{rec_path.stem}-{lig_path.stem}-conf.txt"
+        conf_file = self.out_folder / rec_path.stem / f"{rec_path.stem}-{lig_path.stem}-conf.txt"
 
         keywords = {
             "protein_file": rec_path,
@@ -595,13 +594,13 @@ class PlantsScreening(Screening):
         os.system(command)
         # os.popen(command).read()
 
-    def run_screening(self,  init_screening=True):
+    def run_screening(self, init_screening=True):
 
         if init_screening:
             self.init_screening()
 
         if self.prepare:
-            self.logger('#Preparing ligand and receptors')
+            self.logger("#Preparing ligand and receptors")
             self.prepare_screening()
 
         self.logger("#" * 72)
@@ -621,8 +620,7 @@ class PlantsScreening(Screening):
                 out_path = self.out_folder / rec.stem / lig.stem
                 t0 = time()
                 self.run_plants(out_path, lig, rec)
-                self.logger(
-                    f'{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}')
+                self.logger(f"{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
     def run_spores(self, input_file, output_file=None, mode="complete"):
         """
@@ -660,9 +658,9 @@ class PlantsScreening(Screening):
         if sys.platform == "linux" or sys.platform == "linux2":
             mode = "complete"
         elif sys.platform == "win32":
-            if input_file.suffix == '.pdb':
+            if input_file.suffix == ".pdb":
                 mode = "completepdb"
-            elif input_file.suffix == '.mol2':
+            elif input_file.suffix == ".mol2":
                 mode = "completemol2"
 
         docking_executable = self.get_docking_executable("spores")
@@ -673,7 +671,6 @@ class PlantsScreening(Screening):
 
 
 class LedockScreening(Screening):
-
     def prepare_screening(self):
         """
         Look into receptors folder and ligands folder and prepare each
@@ -717,8 +714,7 @@ class LedockScreening(Screening):
         for lig in self.ligands:
             # .pdb .mol2 or .pdbqt
             self.fix_multiplefragment(lig)
-            out = self.prepared_ligand_folder / \
-                f"{lig.stem}-prepared_ledock.mol2"
+            out = self.prepared_ligand_folder / f"{lig.stem}-prepared_ledock.mol2"
             self.run_spores(lig, out, mode="settypes")
             ligands_prepared.append(out)
 
@@ -766,13 +762,13 @@ class LedockScreening(Screening):
         os.system(command)
         return True
 
-    def run_screening(self,   init_screening=True):
+    def run_screening(self, init_screening=True):
 
         if init_screening:
             self.init_screening()
 
         if self.prepare:
-            self.logger('#Preparing ligand and receptors')
+            self.logger("#Preparing ligand and receptors")
             self.prepare_screening()
 
         if self.verbose:
@@ -785,7 +781,7 @@ class LedockScreening(Screening):
                 continue
             t0 = time()
             self.run_ledock(rec)
-            self.logger(f'{self.backend},{rec.stem},null,{time()-t0:.2f}')
+            self.logger(f"{self.backend},{rec.stem},null,{time()-t0:.2f}")
 
     def run_lepro(self, input_file, flag=""):
         """
@@ -882,30 +878,25 @@ if __name__ == "__main__":
         backend = "vina"
 
         def test_prepared_folder(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
             s.prepared_folder()
 
         def test_prepare_receptors(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
             s.prepared_folder()
             s.prepare_receptors()
 
         def prepare_ligands(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
             s.prepared_folder()
             s.prepare_ligands()
 
         def prepare_screening(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
             s.prepare_screening()
 
         def test_get_docking_executable(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
             docking_engine = {
                 "fwavina",
                 "vina",
@@ -920,19 +911,16 @@ if __name__ == "__main__":
                 s.get_docking_executable(backend)
 
         def test_run_vina(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
 
-            s.run_vina(self, 'out_path', 'lig_path', 'rec_path')
+            s.run_vina(self, "out_path", "lig_path", "rec_path")
 
-        def test_run_screening_prepare_True(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend, prepare=True)
+        def test_run_screening_prepare_true(self):
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend, prepare=True)
             s.run_screening()
 
         def test_run_screening_prepare_False(self):
-            s = VinaScreening(self.ligands, self.receptors,
-                              self.out, self.backend, prepare=False)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend, prepare=False)
             s.run_screening()
 
     def test_vina():
@@ -953,7 +941,7 @@ if __name__ == "__main__":
             prepare=True,
             # prepared_ligand_folder=prepared_ligands,
             # prepared_receptors_folder=prepared_receptors,
-            exe_file='../exe.paths'
+            exe_file="../exe.paths",
         )
         # s.init_screening()
         # s.prepared_folder('vina')
@@ -965,7 +953,7 @@ if __name__ == "__main__":
         s.run_screening()
 
     # test_vina()
-#
+    #
     # %% =============================================================================
     # Plants test
     # =============================================================================
@@ -979,12 +967,9 @@ if __name__ == "__main__":
         out = Path("../../data/our-test-plants")
         conf = Path("../../data/config_plants_speed4.txt")
         backend = "plants"
-        s = PlantsScreening(ligands, receptors, 
-                            out,
-                            conf=conf,
-                            backend=backend, verbose=True,
-                            prepare=True,
-                            exe_file='../exe.paths')
+        s = PlantsScreening(
+            ligands, receptors, out, conf=conf, backend=backend, verbose=True, prepare=True, exe_file="../exe.paths"
+        )
         # s.init_screening()
         # s.prepared_folder('plants')
         # s.prepare_ligands()
@@ -1005,8 +990,7 @@ if __name__ == "__main__":
         ligands = Path("../../data/ligands")
         receptors = Path("../../data/receptor")
         prepared_ligands = Path("../../data/prepared/prepared_ligands_ledock")
-        prepared_receptors = Path(
-            "../../data/prepared/prepared_receptors_ledock")
+        prepared_receptors = Path("../../data/prepared/prepared_receptors_ledock")
         out = Path("../../data/out")
         conf = Path("../../data/config_ledock_sample.txt")
         backend = "ledock"

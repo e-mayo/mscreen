@@ -1,0 +1,2 @@
+test_mscreenCLI_prepare.bat
+test_mscreenCLI_screening.bat

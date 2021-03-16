@@ -9,8 +9,7 @@ Created on Fri Oct 25 19:55:51 2019
 # Import the argparse library
 
 import argparse
-import os
-import sys
+
 import VinaAnalysis
 
 # Create the parser
