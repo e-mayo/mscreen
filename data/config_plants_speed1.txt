@@ -17,8 +17,8 @@ search_speed speed1              # speed1 (highes realibility) speed2 speed4 (hi
 # flip_ring_corners 0             # activate (1) or deactivate flipping of free ring corners (standard: 0)
 
 # BINDING SITE 
-bindingsite_center 53.96 -19.44 38.39 
-bindingsite_radius 13.91
+bindingsite_center 62.21 5.02 -23.68 
+bindingsite_radius 17.83
 
 # CLUSTER ALGORITHM
 cluster_rmsd 2.0                 # RMSD similarity threshold for cluster algorithm (standard:2.0)
