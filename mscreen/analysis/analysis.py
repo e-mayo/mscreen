@@ -486,13 +486,13 @@ class AnalysisFactory:
     def __init__(self):
         self._analysers = {}
 
-    def register_analyzer(self, backend, analyzer):
+    def register_analyzer(self, docking_program, analyzer):
         """
         This function add an analyser to the _analysers dictionary
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Key of the reader.
         screening : Screening
             Screening engine to be used(Should inherit from Screening class).
@@ -502,21 +502,21 @@ class AnalysisFactory:
         None.
 
         """
-        self._analysers[backend] = analyzer
+        self._analysers[docking_program] = analyzer
 
-    def get_analyzer(self, backend):
+    def get_analyzer(self, docking_program):
         """
         Get screening object
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Reader key.
 
         Raises
         ------
         ValueError
-            If backend dont match any _readers keys.
+            If docking_program dont match any _readers keys.
 
         Returns
         -------
@@ -524,18 +524,18 @@ class AnalysisFactory:
             Return the reader object.
 
         """
-        analyzer = self._analysers[backend]
+        analyzer = self._analysers[docking_program]
         if not analyzer:
-            raise ValueError(backend)
+            raise ValueError(docking_program)
         return analyzer
 
 
-    def run_analysis(self, result_folder,atype, backend, **kwargs):
+    def run_analysis(self, result_folder,atype, docking_program, **kwargs):
         """
         
 
         """
-        analyzer = self.get_analyzer(backend)
+        analyzer = self.get_analyzer(docking_program)
         a = analyzer(**kwargs)
         a = VinaAnalysis(result_folder,result_folder,atype)
         if atype =='short':

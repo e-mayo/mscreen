@@ -33,13 +33,13 @@ class ScreeningFactory:
     def __init__(self):
         self._program = {}
 
-    def register_program(self, backend, screening):
+    def register_program(self, docking_program, screening):
         """
         This function add a reader to the _readers dictionary
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Key of the reader.
         screening : Screening
             Screening engine to be used(Should inherit from Screening class).
@@ -49,21 +49,21 @@ class ScreeningFactory:
         None.
 
         """
-        self._program[backend] = screening
+        self._program[docking_program] = screening
 
-    def get_program(self, backend):
+    def get_program(self, docking_program):
         """
         Get screening object
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Reader key.
 
         Raises
         ------
         ValueError
-            If backend dont match any _readers keys.
+            If docking_program dont match any _readers keys.
 
         Returns
         -------
@@ -71,21 +71,21 @@ class ScreeningFactory:
             Return the reader object.
 
         """
-        screening = self._program[backend]
+        screening = self._program[docking_program]
         if not screening:
-            raise ValueError(backend)
+            raise ValueError(docking_program)
         return screening
 
-    def prepare_screening(self, file_name, backend, **kwargs):
-        screening = self.get_program(backend)
+    def prepare_screening(self, file_name, docking_program, **kwargs):
+        screening = self.get_program(docking_program)
         s = screening(**kwargs)
         s.prepare_screening()
         return 1
 
-    def run_vscreening(self, file_name, backend, **kwargs):
+    def run_vscreening(self, file_name, docking_program, **kwargs):
         """
         If you want to read a conf file use this function.
-        It read the configuration file usinng the backend register 
+        It read the configuration file usinng the docking_program register 
         in _readers.
 
 
@@ -93,8 +93,8 @@ class ScreeningFactory:
         ----------
         file_name : Path
             The conf file path.
-        backend : str
-            The backend to use. eg: 'vina'
+        docking_program : str
+            The docking_program to use. eg: 'vina'
 
         Returns
         -------
@@ -111,7 +111,7 @@ class ScreeningFactory:
              'center_y': 'arg'}
 
         """
-        screening = self.get_program(backend)
+        screening = self.get_program(docking_program)
         s = screening(**kwargs)
         s.run_screening()
 
@@ -129,7 +129,7 @@ class Screening:
         receptors,
         out="out",
         conf="conf.txt",
-        backend="qvina-w",
+        docking_program="vina",
         prepare=False,
         verbose=False,
         log_file=None,
@@ -139,7 +139,7 @@ class Screening:
         self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
 
         self.verbose = verbose
-        self.backend = backend
+        self.docking_program = docking_program
         self.ligand_folder = Path(ligands)
         self.ligands = list(self.ligand_folder.iterdir())
         # self.ligands = []
@@ -179,7 +179,7 @@ class Screening:
         if not self.log_file.exists():
             with open(self.log_file, "w") as f:
                 f.write("#Virtual screening logfile:\n")
-                f.write(f"#backend: {self.backend}\n")
+                f.write(f"#docking_program: {self.docking_program}\n")
                 f.write(f"#conf: {self.conf}\n")
                 f.write(f"#ligand_folder: {self.ligand_folder}\n")
                 f.write(f"#receptors_folder: {self.receptors_folder}\n")
@@ -446,7 +446,7 @@ class VinaScreening(Screening):
         self.prepare_receptors()
         self.prepare_ligands()
 
-    def get_docking_executable(self, backend):
+    def get_docking_executable(self, docking_program):
 
         docking_engine = {
             "fwavina": "fwavina",  # linux & win
@@ -459,18 +459,20 @@ class VinaScreening(Screening):
             "smina": "smina",  # linux
         }
 
-        exe_name = docking_engine[backend]
+        exe_name = docking_engine[docking_program]
         return self._get_executable_(exe_name)
 
     def run_vina(self, out_path, lig_path, rec_path):
 
         if self.conf.exists() == False:
             print("Configuration file is required for virtual screening")
-            raise ValueError
+            print("edning docking process")
+            return None
+            # raise ValueError
         copy(self.conf, self.out_folder / "conf.txt")
         log = out_path / "{0}-log.txt".format(lig_path.stem)
         out = out_path / "{}-out.pdbqt".format(lig_path.stem)
-        docking_executable = self.get_docking_executable(self.backend)
+        docking_executable = self.get_docking_executable(self.docking_program)
 
         command = f"{docking_executable} --config {self.conf}\
                     --receptor {rec_path}\
@@ -482,7 +484,7 @@ class VinaScreening(Screening):
     def run_screening(self, init_screening=True):
 
         self.logger("#" * 72)
-        self.logger(f"#Running virtual screening using {self.backend}")
+        self.logger(f"#Running virtual screening using {self.docking_program}")
         self.logger("#" * 72)
 
         if init_screening:
@@ -505,7 +507,7 @@ class VinaScreening(Screening):
                 os.mkdir(out_path)
                 t0 = time()
                 self.run_vina(out_path, lig, rec)
-                self.logger(f"{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}")
+                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
     # def set_metalloprotein_charge(self,atomname,charge):
     # pass
@@ -565,14 +567,14 @@ class PlantsScreening(Screening):
             ligands_prepared.append(out)
         self.ligands = ligands_prepared
 
-    def get_docking_executable(self, backend):
+    def get_docking_executable(self, docking_program):
 
         docking_engine = {
             "spores": "spores",  # linux & winc
             "plants": "plants",  # linux & win
         }
 
-        exe_name = docking_engine[backend]
+        exe_name = docking_engine[docking_program]
         return self._get_executable_(exe_name)
 
     def run_plants(self, out_path, lig_path, rec_path):
@@ -586,10 +588,10 @@ class PlantsScreening(Screening):
         }
 
         # print(reader.read_conf(self.conf, "plants"))
-        plants_keywords = reader.read_conf(self.conf, self.backend)
+        plants_keywords = reader.read_conf(self.conf, self.docking_program)
         plants_keywords = {**plants_keywords, **keywords}
         writer.write_conf(plants_keywords, "plants", conf_file)
-        docking_executable = self.get_docking_executable(self.backend)
+        docking_executable = self.get_docking_executable(self.docking_program)
         command = f"{docking_executable} --mode screen {conf_file}"
         os.system(command)
         # os.popen(command).read()
@@ -604,7 +606,7 @@ class PlantsScreening(Screening):
             self.prepare_screening()
 
         self.logger("#" * 72)
-        self.logger(f"#Running virtual screening using {self.backend}")
+        self.logger(f"#Running virtual screening using {self.docking_program}")
         self.logger("#" * 72)
 
         for rec in self.receptors:
@@ -620,7 +622,7 @@ class PlantsScreening(Screening):
                 out_path = self.out_folder / rec.stem / lig.stem
                 t0 = time()
                 self.run_plants(out_path, lig, rec)
-                self.logger(f"{self.backend},{rec.stem},{lig.stem},{time()-t0:.2f}")
+                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
     def run_spores(self, input_file, output_file=None, mode="complete"):
         """
@@ -728,14 +730,14 @@ class LedockScreening(Screening):
                 f.write(f"{lig}\n")
         return self.ligand_list
 
-    def get_docking_executable(self, backend):
+    def get_docking_executable(self, docking_program):
         docking_engine = {
             "spores": "spores",  # linux & winc
             "lepro": "lepro",  # linux & win
             "ledock": "ledock",  # linux & win
         }
 
-        exe_name = docking_engine[backend]
+        exe_name = docking_engine[docking_program]
         return self._get_executable_(exe_name)
 
     def run_ledock(self, rec_path):
@@ -773,7 +775,7 @@ class LedockScreening(Screening):
 
         if self.verbose:
             self.logger("#" * 72)
-            self.logger(f"#Running virtual screening using {self.backend}")
+            self.logger(f"#Running virtual screening using {self.docking_program}")
             self.logger("#" * 72)
 
         for rec in self.receptors:
@@ -781,7 +783,7 @@ class LedockScreening(Screening):
                 continue
             t0 = time()
             self.run_ledock(rec)
-            self.logger(f"{self.backend},{rec.stem},null,{time()-t0:.2f}")
+            self.logger(f"{self.docking_program},{rec.stem},null,{time()-t0:.2f}")
 
     def run_lepro(self, input_file, flag=""):
         """
@@ -875,28 +877,28 @@ if __name__ == "__main__":
         receptors = Path("../../data/receptor")
         out = Path("../../data/out")
         conf = Path("../../data/conf.txt")
-        backend = "vina"
+        docking_program = "vina"
 
         def test_prepared_folder(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
             s.prepared_folder()
 
         def test_prepare_receptors(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
             s.prepared_folder()
             s.prepare_receptors()
 
         def prepare_ligands(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
             s.prepared_folder()
             s.prepare_ligands()
 
         def prepare_screening(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
             s.prepare_screening()
 
         def test_get_docking_executable(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
             docking_engine = {
                 "fwavina",
                 "vina",
@@ -907,20 +909,20 @@ if __name__ == "__main__":
                 "qvina-w",
                 "smina",
             }
-            for backend in docking_engine:
-                s.get_docking_executable(backend)
+            for docking_program in docking_engine:
+                s.get_docking_executable(docking_program)
 
         def test_run_vina(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
 
             s.run_vina(self, "out_path", "lig_path", "rec_path")
 
         def test_run_screening_prepare_true(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend, prepare=True)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program, prepare=True)
             s.run_screening()
 
         def test_run_screening_prepare_False(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.backend, prepare=False)
+            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program, prepare=False)
             s.run_screening()
 
     def test_vina():
@@ -931,13 +933,13 @@ if __name__ == "__main__":
         # "../../data/prepared/prepared_receptors_vina")
         out = Path("../../data/out")
         conf = Path("../../data/config_vina_ex1.txt")
-        backend = "vina"
+        docking_program = "vina"
         s = VinaScreening(
             ligands,
             receptors,
             out,
             conf,
-            backend,
+            docking_program,
             prepare=True,
             # prepared_ligand_folder=prepared_ligands,
             # prepared_receptors_folder=prepared_receptors,
@@ -966,9 +968,9 @@ if __name__ == "__main__":
         # receptors = Path("../../data/prepared_receptors_plants")
         out = Path("../../data/our-test-plants")
         conf = Path("../../data/config_plants_speed4.txt")
-        backend = "plants"
+        docking_program = "plants"
         s = PlantsScreening(
-            ligands, receptors, out, conf=conf, backend=backend, verbose=True, prepare=True, exe_file="../exe.paths"
+            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=True, exe_file="../exe.paths"
         )
         # s.init_screening()
         # s.prepared_folder('plants')
@@ -993,13 +995,13 @@ if __name__ == "__main__":
         prepared_receptors = Path("../../data/prepared/prepared_receptors_ledock")
         out = Path("../../data/out")
         conf = Path("../../data/config_ledock_sample.txt")
-        backend = "ledock"
+        docking_program = "ledock"
         s = LedockScreening(
             ligands,
             receptors,
             out,
             conf,
-            backend,
+            docking_program,
             # prepared_ligand_folder=prepared_ligands,
             # prepared_receptors_folder=prepared_receptors,
         )
@@ -1016,14 +1018,14 @@ if __name__ == "__main__":
     # prepared_receptors_folder = Path('../../data/prepared/prepared_receptors_vina')
     # out = Path('../../data/out-vina')
     # conf = Path('../../data/conf.txt')
-    # backend = 'vina'
+    # docking_program = 'vina'
 
-    # screening = vsprotocol.get_program(backend)
+    # screening = vsprotocol.get_program(docking_program)
     # s = screening(ligands,
     #               receptors,
     #               out,
     #               conf,
-    #               backend,
+    #               docking_program,
     #               prepared_ligand_folder,
     #               prepared_receptors_folder)
 
@@ -1037,14 +1039,14 @@ if __name__ == "__main__":
     # prepared_receptors_folder = Path('../../data/prepared/prepared_receptors_plants')
     # out = Path('../../data/out-vina')
     # conf = Path('../../data/conf.txt')
-    # backend = 'plants'
+    # docking_program = 'plants'
 
-    # screening = vsprotocol.get_program(backend)
+    # screening = vsprotocol.get_program(docking_program)
     # s = screening(ligands,
     #               receptors,
     #               out,
     #               conf,
-    #               backend,
+    #               docking_program,
     #               prepared_ligand_folder,
     #               prepared_receptors_folder)
 
