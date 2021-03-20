@@ -13,216 +13,203 @@ from Analysis.analysis import vsanalyser
 import argparse
 import os
 import sys
+#%%
+# 
 
-
+        
 def pareser():
-    my_parser = argparse.ArgumentParser(prog="mscreen", usage="%(prog)s [options]", description="Vina Screening")
-
-    # subparsers = my_parser.add_subparsers()
     
-    # subparsers.add_parser
-    my_parser.add_argument(
-        "pkg",
-        metavar="pkg",
-        type=str,
-        help="screening, analysis, prepare",
-        action="store",
-        choices=["screen", "analysis", "prepare"],
-    )
+    main_parser = argparse.ArgumentParser(prog='mscreen',
+                                          description='mScreen is an intuitive interface to many docking programs for virtual screening')
+    parent_parser = argparse.ArgumentParser(add_help=False)  
+    subparsers = main_parser.add_subparsers(title='Task',dest='task')
 
-
-    my_parser.add_argument(
-        "-l",
-        "--ligands",
-        metavar="ligands folder",
-        type=str,
-        help="the path to ligands",
-        default="ligands",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-r",
-        "--receptors",
-        metavar="receptors folder",
-        type=str,
-        help="the path to receptors",
-        default=None,
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-o",
-        "--out",
-        metavar="output_folder",
-        type=str,
-        help="The path to the output folder",
-        default="out",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-c",
-        "--conf",
-        metavar="conf file",
-        type=str,
-        help="The name of the configuration file for the\
-                                vina docking",
-        default="conf.txt",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-bk",
-        "--backend",
-        metavar="docking_engine",
-        choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants"],
-        type=str,
-        help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina', 'plants ",
-        default="qvina-w",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-p",
-        "--prepare",
-        metavar="ligands_folder",
-        type=str,
-        help="Prepare ligand",
-        # action='store_true',
-        default=None,
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-rn",
-        "--report_name",
-        metavar="report file name",
-        type=str,
-        help="Report file name",
-        default="results.txt",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-a",
-        "--analysis",
-        metavar="analysis",
-        type=str,
-        choices=["full", "short"],
-        help="The type of analysis full",
-        # usage = '%(prog)s [-a full]  -o out\
-        # return a sdf file with all the information of the \
-        #     virtual screeing\n\
-        # %(prog)s [-a short]  -o out return a txt file with\
-        #     a vina score resume',
-        default="short",
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-log",
-        "--log_file",
-        metavar="log_file",
-        type=str,
-        help="Log file name for further information",
-        # usage = '%(prog)s [-a full]  -o out\
-        # return a sdf file with all the information of the \
-        #     virtual screeing\n\
-        # %(prog)s [-a short]  -o out return a txt file with\
-        #     a vina score resume',
-        default=None,
-        required=False,
-    )
-
-    my_parser.add_argument(
-        "-e",
-        "--exe",
-        metavar="executable_file",
-        type=str,
-        help="File containing executables path",
-        # usage = '%(prog)s [-a full]  -o out\
-        # return a sdf file with all the information of the \
-        #     virtual screeing\n\
-        # %(prog)s [-a short]  -o out return a txt file with\
-        #     a vina score resume',
-        default=None,
-        required=False,
-    )
+    parent_parser.add_argument(
+            "-d",
+            "--docking_program",
+            metavar="docking_program",
+            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants"],
+            type=str,
+            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina', 'plants'. Default vina ",
+            default="vina",
+            required=False,)
         
-    my_parser.add_argument(
-        "-vs",
-        "--vs_result",
-        metavar="analysis_input",
-        type=str,
-        help="The folder containing the virtual screening result",
-        # usage = '%(prog)s [-a full]  -o out\
-        # return a sdf file with all the information of the \
-        #     virtual screeing\n\
-        # %(prog)s [-a short]  -o out return a txt file with\
-        #     a vina score resume',
-        default=None,
-        required=False,
-    )
+       
+    parent_parser.add_argument("-e",
+                            "--exe",
+                            metavar="executable_file",
+                            type=str,
+                            help="File containing executables path\n\
+                                eg: vina=C:\\Users\\vina.exe",
+                            default=None,
+                            required=False)
         
-    my_parser.add_argument(
-        "-t",
-        "--type_of_analysis",
-        metavar="type_of_analysis",
-        type=str,
-        help="""The type of analysis to do. 
-                full  - return a sdf file with ligand propierties 
-                short - write a txt file with the ligand ranking""",
-        choices=["full", "short"],
-        # usage = '%(prog)s [-a full]  -o out\
-        # return a sdf file with all the information of the \
-        #     virtual screeing\n\
-        # %(prog)s [-a short]  -o out return a txt file with\
-        #     a vina score resume',
-        default=None,
-        required=False,
-    )
+    parent_parser.add_argument("-v", "--verbose", action="store_true")
+    
+    prepare_parser = subparsers.add_parser('prepare',
+                                      help='Prepare ligand and receptor for virtual screening',
+                                      usage='mscreen prepare -l ligands_folder -r receptors_folder [-o output_folder] [-d docking_program] [-e executable_file] [-v]',
+                                      parents=[parent_parser])
         
-    # my_group = my_parser.add_mutually_exclusive_group(required=True)
+    prepare_parser.add_argument("-l",
+                                "--ligands",
+                                metavar="ligands_folder",
+                                type=str,
+                                help="prepare -l folder: The path to unprocessed ligands\n\
+                                      screen  -l folder: The path to (un)processed ligands\
+                                                          If ligands are not prepared use along with -p.",
+                                required=True,
+                                )
+        
+    prepare_parser.add_argument("-r",
+                            "--receptors",
+                            metavar="receptors_folder",
+                            type=str,
+                            help="""prepare -r folder: The path to unprocessed receptors\n
+                                  screen  -r folder: The path to (un)processed receptors\n
+                                                      If receptors are not prepared use along with -p.""",
+                            required=True)
+                            # )
+        
+    prepare_parser.add_argument("-o",
+                            "--out",
+                            metavar="output_folder",
+                            type=str,
+                            help="Path to the output folder",
+                            default="out",
+                            required=False)
     
 
-    my_parser.add_argument("-v", "--verbose", action="store_true")
-    # my_group.add_argument('-s', '--silent', action='store_true')
-    args = my_parser.parse_args()
+    screen_parser = subparsers.add_parser('screen', 
+                                          help='Run virtual screenin using [-d docking_program]',
+                                          usage='mscreen screen [-h] -l ligands_folder -r receptors_folder [-o output_folder] [-c conf_file] [-log log_file] [-p] [-d docking_program] [-e executable_file] [-v]',
+                                          parents=[parent_parser])
+    
+    screen_parser.add_argument("-l",
+                                "--ligands",
+                                metavar="ligands_folder",
+                                type=str,
+                                help="prepare -l folder: The path to unprocessed ligands\n\
+                                      screen  -l folder: The path to (un)processed ligands\
+                                                          If ligands are not prepared use along with -p.",
+                                # default="ligands",
+                                required=True,
+                                )
+        
+    screen_parser.add_argument("-r",
+                            "--receptors",
+                            metavar="receptors_folder",
+                            type=str,
+                            help="""prepare -r folder: The path to unprocessed receptors\n
+                                  screen  -r folder: The path to (un)processed receptors\n
+                                                      If receptors are not prepared use along with -p.""",
+                            # default="receptors",
+                            required=True)
+                            # )
+        
+    screen_parser.add_argument("-o",
+                            "--out",
+                            metavar="output_folder",
+                            type=str,
+                            help="Path to the output folder",
+                            default="out",
+                            required=False)
 
-    return args
-
+    screen_parser.add_argument("-c",
+                                "--conf",
+                                metavar="conf_file",
+                                type=str,
+                                help="The name of the configuration file for the docking program",
+                                default="conf.txt",
+                                required=False)
+     
+    screen_parser.add_argument("-log",
+                            "--log_file",
+                            metavar="log_file",
+                            type=str,
+                            help="Log file name. This file anotated the time used for each docking task and some not usefull information",
+                            default=None,
+                            required=False)
+    
+    screen_parser.add_argument("-p",
+                            "--prepare",
+                            # metavar="autoprepare ligand and receptor",
+                            # type=str,
+                            help="If you will do a virtual screening with unprocessed structures use this for preprocessing",
+                            action='store_true',
+                            default=None,
+                            required=False)
+    
+    analysis_parser = subparsers.add_parser('analysis', 
+                                          help='Analsysis of the virtual screening results',
+                                          usage='mscreen analysis [-h] -i analysis_input [-o analysis_output] [-t type_of_analysis] [-d docking_program] [-e executable_file] [-v]',
+                                          parents=[parent_parser])
+        
+    analysis_parser.add_argument("-i",
+                                "--input",
+                                metavar="analysis_input",
+                                type=str,
+                                help="The folder containing the virtual screening result",
+                                required=True)
+    
+    analysis_parser.add_argument("-o",
+                                "--output",
+                                metavar="analysis_output",
+                                type=str,
+                                help="The folder for the virtual screening report",
+                                default=None,
+                                required=False)
+       
+    
+    analysis_parser.add_argument("-t",
+                        "--type_of_analysis",
+                        metavar="type_of_analysis",
+                        type=str,
+                        help="""The type of analysis to do. 
+                                full  - return a sdf file with ligand propierties 
+                                short - write a txt file with the ligand ranking""",
+                        choices=["full", "short"],
+                        default="short",
+                        required=False)    
+    
+    
+    
+    return main_parser
 
 if __name__ == "__main__":
 
-    from time import time
-    import random
-    # print(args.pkg)
-    args = pareser()
-    if args.pkg == "prepare":
-
-        screening = vsprotocol.get_program(args.backend)
+    parser = pareser()
+    args = parser.parse_args()
+    
+    if not args.task:
+        print("ArgumenError: task argument is required. Available task's value {prepare|screen|analysis}")
+        print('Usage: python mscreen.py {prepare|screen|analysis} -l ligands_folder -r receptors_folder [-o output_folder]')
+    
+    
+    if args.task == "prepare":
+        
+        screening = vsprotocol.get_program(args.docking_program)
         s = screening(
-            args.ligands,
-            args.receptors,
-            args.out,
-            args.conf,
-            args.backend,
-            args.prepare,
-            args.verbose,
-            args.log_file,
-            args.exe,
+            ligands=args.ligands,
+            receptors=args.receptors,
+            out=args.out,
+            conf="conf.txt",#args.conf,
+            docking_program=args.docking_program,
+            prepare=True,
+            verbose=args.verbose,
+            log_file='',#args.log_file,
+            exe_file=args.exe,
         )
         s.prepare_screening()
 
-    if args.pkg == "screen":
-        screening = vsprotocol.get_program(args.backend)
+    if args.task == "screen":
+        screening = vsprotocol.get_program(args.docking_program)
         s = screening(
             args.ligands,
             args.receptors,
             args.out,
             args.conf,
-            args.backend,
+            args.docking_program,
             args.prepare,
             args.verbose,
             args.log_file,
@@ -230,45 +217,34 @@ if __name__ == "__main__":
         )
         s.run_screening()
 
-    elif args.pkg == 'analysis':
-        analyser = vsanalyser.get_analyzer(args.backend)
-        a = analyser(args.vs_result, args.vs_result, mode=args.type_of_analysis)
+    elif args.task == 'analysis':
+        analyser = vsanalyser.get_analyzer(args.docking_program)
+        a = analyser(args.input, args.input, mode=args.type_of_analysis)
         if args.type_of_analysis == 'full':
             a.run_full_analysis()
         if args.type_of_analysis  == 'short':
             a.run_short_analysis()
 
-# %%
-# class Test_mscreen:
+# # %%
+# # class Test_mscreen:
 
-#     def test_prepare(self,backend=None):
-#         ligands = '../data/ePepN/ligands'
-#         receptors = '../data/ePepN/receptor'
-#         out_prepare = '../data/prepare'
-#         backend = backend
-#         screening = vsprotocol.get_program(backend)
-#         s = screening(ligands,receptors,out_prepare,backend=backend,verbose=1)
-#         s.prepare_screening()
+# #     def test_prepare(self,docking_program=None):
+# #         ligands = '../data/ePepN/ligands'
+# #         receptors = '../data/ePepN/receptor'
+# #         out_prepare = '../data/prepare'
+# #         docking_program = docking_program
+# #         screening = vsprotocol.get_program(docking_program)
+# #         s = screening(ligands,receptors,out_prepare,docking_program=docking_program,verbose=1)
+# #         s.prepare_screening()
 
-#     def test_screen(self,backend,config_file):
-#         ligands = f'../data/prepare/prepared_ligands_{backend}'
-#         receptors = f'../data/prepare/prepared_receptors_{backend}'
-#         out_screening = f'../data/out-{backend}'
-#         backend = backend
-#         conf = config_file
-#         screening = vsprotocol.get_program(backend)
-#         s = screening(ligands,receptors,out_screening,conf,backend=backend)
-#         s.run_screening()
-# %%
-# t = Test_mscreen()
-# # t.test_prepare('vina')
-# # t.test_screen('vina','../data/config_vina_ex1.txt')
-# print('#'*144)
-# print('VINA OK')
-# print('#'*144)
-# t.test_prepare('plants')
-# t.test_screen('plants','../data/config_plants_speed4.txt')
-# print('#'*144)
-# print('PLANTS OK')
-# print('#'*144)
+# #     def test_screen(self,docking_program,config_file):
+# #         ligands = f'../data/prepare/prepared_ligands_{docking_program}'
+# #         receptors = f'../data/prepare/prepared_receptors_{docking_program}'
+# #         out_screening = f'../data/out-{docking_program}'
+# #         docking_program = docking_program
+# #         conf = config_file
+# #         screening = vsprotocol.get_program(docking_program)
+# #         s = screening(ligands,receptors,out_screening,conf,docking_program=docking_program)
+# #         s.run_screening()
+
 

@@ -5,7 +5,7 @@ Convert config file between docking engines
 import re
 
 class ConfFile:
-    def __ini__(self, file, backend):
+    def __ini__(self, file, docking_program):
         pass
 
 class ConfReader:
@@ -21,13 +21,13 @@ class ConfReader:
     def __init__(self):
         self._readers = {}
     
-    def register_reader(self, backend, reader):
+    def register_reader(self, docking_program, reader):
         """
         This function add a reader to the _readers dictionary
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Key of the reader.
         reader : Reader
             The conf file reader (Should inherit from Reader class).
@@ -37,21 +37,21 @@ class ConfReader:
         None.
 
         """
-        self._readers[backend] = reader
+        self._readers[docking_program] = reader
 
-    def get_reader(self, backend):
+    def get_reader(self, docking_program):
         """
         Get reader object
 
         Parameters
         ----------
-        backend : str
+        docking_program : str
             Reader key.
 
         Raises
         ------
         ValueError
-            If backend dont match any _readers keys.
+            If docking_program dont match any _readers keys.
 
         Returns
         -------
@@ -59,14 +59,14 @@ class ConfReader:
             Return the reader object.
 
         """
-        reader = self._readers[backend]
-        if not reader: raise ValueError(backend)
+        reader = self._readers[docking_program]
+        if not reader: raise ValueError(docking_program)
         return reader
     
-    def read_conf(self,file_name,backend):
+    def read_conf(self,file_name,docking_program):
         """
         If you want to read a conf file use this function.
-        It read the configuration file usinng the backend register 
+        It read the configuration file usinng the docking_program register 
         in _readers.
     
 
@@ -74,8 +74,8 @@ class ConfReader:
         ----------
         file_name : Path
             The conf file path.
-        backend : str
-            The backend to use. eg: 'vina'
+        docking_program : str
+            The docking_program to use. eg: 'vina'
 
         Returns
         -------
@@ -92,8 +92,8 @@ class ConfReader:
              'center_y': 'arg'}
 
         """
-        reader = self.get_reader(backend)
-        conf = reader(file_name,backend)
+        reader = self.get_reader(docking_program)
+        conf = reader(file_name,docking_program)
         
         return conf.get_prop()
     
@@ -102,17 +102,17 @@ class ConfWriter:
     def __init__(self):
         self._writers = {}
     
-    def register_writer(self, backend, writer):
-        self._writers[backend] = writer
+    def register_writer(self, docking_program, writer):
+        self._writers[docking_program] = writer
 
-    def get_writer(self, backend):
-        writer = self._writers[backend]
-        if not writer: raise ValueError(backend)
+    def get_writer(self, docking_program):
+        writer = self._writers[docking_program]
+        if not writer: raise ValueError(docking_program)
         return writer
     
-    def write_conf(self,keywords,backend,filename):
-        writer = self.get_writer(backend)
-        w = writer(keywords, backend, filename)
+    def write_conf(self,keywords,docking_program,filename):
+        writer = self.get_writer(docking_program)
+        w = writer(keywords, docking_program, filename)
         w.write()
         return True
         
@@ -121,9 +121,9 @@ class ConfWriter:
 
 
 class Writer:
-    def __init__(self,keywords, backend, filename):
+    def __init__(self,keywords, docking_program, filename):
         self.keywords = keywords        
-        self.backend = backend
+        self.docking_program = docking_program
         self.filename = filename        
         self.lines = []
     
@@ -187,9 +187,9 @@ class LedockWriter(Writer):
 
 
 class Reader:
-    def __init__(self,file_name, backend):
+    def __init__(self,file_name, docking_program):
         self.file_name = file_name        
-        self.backend = backend
+        self.docking_program = docking_program
         self.text = self.read(file_name)
     
     def clean_text(self):
@@ -293,21 +293,21 @@ writer.register_writer('plants', PlantsWriter)
 class ConfConverter:
     
     @staticmethod
-    def convert(keywords, from_backend,to_backend):
+    def convert(keywords, from_docking_program,to_docking_program):
         
-        if from_backend != 'vina' or to_backend != 'vina':
-            converter = get_converter(from_backend,'vina')
+        if from_docking_program != 'vina' or to_docking_program != 'vina':
+            converter = get_converter(from_docking_program,'vina')
             coords = converter(keywords)
-            converter = get_converter('vina', to_backend)
+            converter = get_converter('vina', to_docking_program)
             coords =  converter(keywords)
             return coords
         else:
-            converter = get_converter(from_backend,'to_backend')
+            converter = get_converter(from_docking_program,'to_docking_program')
             coords = converter(keywords)
             return coords
     
     @staticmethod
-    def get_converter(from_backend,to_backend):
+    def get_converter(from_docking_program,to_docking_program):
         converter = {
             'vina':{'plants':coor_vina_to_plants,
                     'ledock':coor_vina_to_ledock
@@ -317,7 +317,7 @@ class ConfConverter:
             'plants':{'vina':coor_plants_to_vina,
                       }
                     }
-        return get_converter['from_backend']['to_backend']
+        return get_converter['from_docking_program']['to_docking_program']
         
             
             
@@ -442,7 +442,7 @@ class ConfConverter:
     #%%
        
     @staticmethod
-    def get_keywords_converter(from_backend,to_backend):
+    def get_keywords_converter(from_docking_program,to_docking_program):
         """uncompleted"""
         
         
@@ -478,9 +478,9 @@ class ConfConverter:
                       }
                     }
     @staticmethod   
-    def covert_keywords(keywords,from_backend,to_backend):
+    def covert_keywords(keywords,from_docking_program,to_docking_program):
         """
-        Convert keywords from one backend to other
+        Convert keywords from one docking_program to other
         only suport the default keywords
         
         Returns
@@ -488,7 +488,7 @@ class ConfConverter:
         dict. converted keywords
         """
         pass
-        # converter = get_keywords_converter(from_backend,to_backend)
+        # converter = get_keywords_converter(from_docking_program,to_docking_program)
 #%%
 
 

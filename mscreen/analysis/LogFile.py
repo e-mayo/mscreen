@@ -141,7 +141,7 @@ class PlantsLogFile(LogFile):
         self.ave = self.data.mean(axis=0)
         self.headers = headers
 
-print('imported')
+
 
 if __name__ == '__main__':
     print('Nothing')

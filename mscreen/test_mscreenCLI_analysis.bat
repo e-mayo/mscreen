@@ -4,15 +4,15 @@
 
 @REM echo '##############################################'
 @REM echo TESTING ANALYSIS VINA
-python mscreen.py analysis -bk vina   -vs ../data/out-test-vina_ex1  -t short
-python mscreen.py analysis -bk vina   -vs ../data/out-test-vina_ex1  -t full
+python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t short
+python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t full
 @REM echo ANALYSIS VINA OK
 
 @REM echo PREPARING VINA OK
 @REM echo "##############################################"
 @REM echo TESTING ANALYSIS PLANTS
-python mscreen.py analysis -bk plants -vs ../data/out-test-plants_speed4 -t short
-python mscreen.py analysis -bk plants -vs ../data/out-test-plants_speed4 -t full
+python mscreen.py analysis -d plants -i ../data/out-test-plants_speed4 -t short
+python mscreen.py analysis -d plants -i ../data/out-test-plants_speed4 -t full
 @REM echo ANALYSIS PLANTS OK
 
 
