@@ -14,6 +14,7 @@ from shutil import copy, rmtree, which
 
 from screening.utils import rename_old
 from screening import prepare_vina
+from multiprocess.utils import multi_threading, count_processors
 
 from screening.config import reader
 from screening.config import writer
@@ -612,6 +613,7 @@ class PlantsScreening(Screening):
         for rec in self.receptors:
             if rec.suffix != ".mol2":
                 continue
+            list_args = []
             for lig in self.ligands:
                 if lig.suffix != ".mol2":
                     continue
@@ -621,9 +623,20 @@ class PlantsScreening(Screening):
                 #                    continue
                 out_path = self.out_folder / rec.stem / lig.stem
                 t0 = time()
-                self.run_plants(out_path, lig, rec)
-                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
+                # self.run_plants(out_path, lig, rec)
+                list_args.append((out_path, lig, rec))
+                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
+                
+            job_input_dock_lig = tuple(
+            [tuple([self.run_plants, args]) for args in list_args]
+            )
+            multi_threading(job_input_dock_lig,0,self.run_multiprocess)
+                
+    
+    def run_multiprocess(self,func,args):
+        return func(*args)
+        
     def run_spores(self, input_file, output_file=None, mode="complete"):
         """
         Run a spores instance
@@ -964,13 +977,13 @@ if __name__ == "__main__":
         receptors = Path("../../data/receptor")
         ligands = Path("../../data/ligands")
         receptors = Path("../../data/receptor")
-        # ligands = Path("../../data/prepared_ligands_plants")
-        # receptors = Path("../../data/prepared_receptors_plants")
-        out = Path("../../data/our-test-plants")
+        ligands = Path("../../data/prepare/prepared_ligands_plants")
+        receptors = Path("../../data/prepare/prepared_receptors_plants")
+        out = Path("./our-test-multiprocess-plants")
         conf = Path("../../data/config_plants_speed4.txt")
         docking_program = "plants"
         s = PlantsScreening(
-            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=True, exe_file="../exe.paths"
+            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=False, exe_file="../exe.paths"
         )
         # s.init_screening()
         # s.prepared_folder('plants')
@@ -988,27 +1001,27 @@ if __name__ == "__main__":
     # %%===========================================================================
     # Ledock Test
     # =============================================================================
-    def test_ledock():
-        ligands = Path("../../data/ligands")
-        receptors = Path("../../data/receptor")
-        prepared_ligands = Path("../../data/prepared/prepared_ligands_ledock")
-        prepared_receptors = Path("../../data/prepared/prepared_receptors_ledock")
-        out = Path("../../data/out")
-        conf = Path("../../data/config_ledock_sample.txt")
-        docking_program = "ledock"
-        s = LedockScreening(
-            ligands,
-            receptors,
-            out,
-            conf,
-            docking_program,
-            # prepared_ligand_folder=prepared_ligands,
-            # prepared_receptors_folder=prepared_receptors,
-        )
-        s.init_screening()
-        s.prepare_screening(verbose=1)
-        s.get_docking_executable("ledock")
-        s.run_screening()
+    # def test_ledock():
+    #     ligands = Path("../../data/ligands")
+    #     receptors = Path("../../data/receptor")
+    #     prepared_ligands = Path("../../data/prepared/prepared_ligands_ledock")
+    #     prepared_receptors = Path("../../data/prepared/prepared_receptors_ledock")
+    #     out = Path("../../data/out")
+    #     conf = Path("../../data/config_ledock_sample.txt")
+    #     docking_program = "ledock"
+    #     s = LedockScreening(
+    #         ligands,
+    #         receptors,
+    #         out,
+    #         conf,
+    #         docking_program,
+    #         # prepared_ligand_folder=prepared_ligands,
+    #         # prepared_receptors_folder=prepared_receptors,
+    #     )
+    #     s.init_screening()
+    #     s.prepare_screening(verbose=1)
+    #     s.get_docking_executable("ledock")
+    #     s.run_screening()
 
     # %%
 
@@ -1016,9 +1029,9 @@ if __name__ == "__main__":
     # receptors = Path('../../data/receptor')
     # prepared_ligand_folder = Path('../../data/prepared/prepared_ligands_vina')
     # prepared_receptors_folder = Path('../../data/prepared/prepared_receptors_vina')
-    # out = Path('../../data/out-vina')
-    # conf = Path('../../data/conf.txt')
-    # docking_program = 'vina'
+    # out = Path('../../data/out-test-plants-multiprocess')
+    # conf = Path('../../data/config_plants_speed4.txt')
+    # docking_program = 'plants'
 
     # screening = vsprotocol.get_program(docking_program)
     # s = screening(ligands,
