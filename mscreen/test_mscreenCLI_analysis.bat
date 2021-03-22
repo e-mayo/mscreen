@@ -4,8 +4,8 @@
 
 @REM echo '##############################################'
 @REM echo TESTING ANALYSIS VINA
-python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t short
-python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t full
+@REM python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t short
+@REM python mscreen.py analysis -d vina   -i ../data/out-test-vina_ex1  -t full
 @REM echo ANALYSIS VINA OK
 
 @REM echo PREPARING VINA OK

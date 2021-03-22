@@ -4,7 +4,7 @@
 
 @REM echo '##############################################'
 @REM echo TESTING SCREEN VINA
-python mscreen.py screen -l ../data/prepare/prepared_ligands_vina -r ../data/prepare/prepared_receptors_vina -o ../data/out-test-vina_ex1  -c ../data/config_vina_ex8.txt  -log ../data/workshop_vina_ex8.log -v -d vina
+@REM python mscreen.py screen -l ../data/prepare/prepared_ligands_vina -r ../data/prepare/prepared_receptors_vina -o ../data/out-test-vina_ex1  -c ../data/config_vina_ex8.txt  -log ../data/workshop_vina_ex8.log -v -d vina
 
 @REM echo PREPARING VINA OK
 echo "##############################################"
