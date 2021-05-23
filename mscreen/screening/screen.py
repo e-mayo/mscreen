@@ -137,7 +137,8 @@ class Screening:
         exe_file="exe.paths",
     ):
 
-        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
+        self.SUPPORTED_FORMATS = (
+            ".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
 
         self.verbose = verbose
         self.docking_program = docking_program
@@ -203,11 +204,13 @@ class Screening:
         else:
             folder_name = ""
 
-        self.prepared_ligand_folder = self.out_folder / f"prepared_ligands{folder_name}"
+        self.prepared_ligand_folder = self.out_folder / \
+            f"prepared_ligands{folder_name}"
         if not self.prepared_ligand_folder.exists():
             self.prepared_ligand_folder.mkdir()
 
-        self.prepared_receptors_folder = self.out_folder / f"prepared_receptors{folder_name}"
+        self.prepared_receptors_folder = self.out_folder / \
+            f"prepared_receptors{folder_name}"
         if not self.prepared_receptors_folder.exists():
             self.prepared_receptors_folder.mkdir()
 
@@ -320,7 +323,8 @@ class Screening:
 
     def _get_executable_dist_(self, exe_name):
 
-        bin_path = Path(os.path.realpath("docking_executable")).parent / "screening" / "docking_executable"
+        bin_path = Path(os.path.realpath("docking_executable")
+                        ).parent / "screening" / "docking_executable"
 
         linux_path = bin_path / "linux" / exe_name
         windows_path = bin_path / "win" / exe_name
@@ -389,6 +393,8 @@ class Screening:
             f.write(nmol_text)
         return nmol_text
 
+#
+
 
 class VinaScreening(Screening):
     def prepare_receptors(self):
@@ -442,7 +448,8 @@ class VinaScreening(Screening):
         None.
 
         """
-        self.SUPPORTED_FORMATS = (".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
+        self.SUPPORTED_FORMATS = (
+            ".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
         self.prepared_folder(folder_name="vina")
         self.prepare_receptors()
         self.prepare_ligands()
@@ -508,7 +515,8 @@ class VinaScreening(Screening):
                 os.mkdir(out_path)
                 t0 = time()
                 self.run_vina(out_path, lig, rec)
-                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
+                self.logger(
+                    f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
 
     # def set_metalloprotein_charge(self,atomname,charge):
     # pass
@@ -580,7 +588,8 @@ class PlantsScreening(Screening):
 
     def run_plants(self, out_path, lig_path, rec_path):
 
-        conf_file = self.out_folder / rec_path.stem / f"{rec_path.stem}-{lig_path.stem}-conf.txt"
+        conf_file = self.out_folder / rec_path.stem / \
+            f"{rec_path.stem}-{lig_path.stem}-conf.txt"
 
         keywords = {
             "protein_file": rec_path,
@@ -626,17 +635,17 @@ class PlantsScreening(Screening):
 
                 # self.run_plants(out_path, lig, rec)
                 list_args.append((out_path, lig, rec))
-                self.logger(f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
-                
+                self.logger(
+                    f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
+
             job_input_dock_lig = tuple(
-            [tuple([self.run_plants, args]) for args in list_args]
+                [tuple([self.run_plants, args]) for args in list_args]
             )
-            multi_threading(job_input_dock_lig,0,self.run_multiprocess)
-                
-    
-    def run_multiprocess(self,func,args):
+            multi_threading(job_input_dock_lig, 0, self.run_multiprocess)
+
+    def run_multiprocess(self, func, args):
         return func(*args)
-        
+
     def run_spores(self, input_file, output_file=None, mode="complete"):
         """
         Run a spores instance
@@ -729,7 +738,8 @@ class LedockScreening(Screening):
         for lig in self.ligands:
             # .pdb .mol2 or .pdbqt
             self.fix_multiplefragment(lig)
-            out = self.prepared_ligand_folder / f"{lig.stem}-prepared_ledock.mol2"
+            out = self.prepared_ligand_folder / \
+                f"{lig.stem}-prepared_ledock.mol2"
             self.run_spores(lig, out, mode="settypes")
             ligands_prepared.append(out)
 
@@ -788,7 +798,8 @@ class LedockScreening(Screening):
 
         if self.verbose:
             self.logger("#" * 72)
-            self.logger(f"#Running virtual screening using {self.docking_program}")
+            self.logger(
+                f"#Running virtual screening using {self.docking_program}")
             self.logger("#" * 72)
 
         for rec in self.receptors:
@@ -796,7 +807,8 @@ class LedockScreening(Screening):
                 continue
             t0 = time()
             self.run_ledock(rec)
-            self.logger(f"{self.docking_program},{rec.stem},null,{time()-t0:.2f}")
+            self.logger(
+                f"{self.docking_program},{rec.stem},null,{time()-t0:.2f}")
 
     def run_lepro(self, input_file, flag=""):
         """
@@ -840,7 +852,7 @@ class LedockScreening(Screening):
         input_file : pathlib.Path
             DESCRIPTION.
         output_file : pathlib.Path, optional
-            DESCRIPTION. The default is None.
+            DESCRIPTION. The default is None..
         mode : str, optional
             Spores mode.VAilbles [completemol2,
                                   reprot,
@@ -893,25 +905,30 @@ if __name__ == "__main__":
         docking_program = "vina"
 
         def test_prepared_folder(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
             s.prepared_folder()
 
         def test_prepare_receptors(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
             s.prepared_folder()
             s.prepare_receptors()
 
         def prepare_ligands(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
             s.prepared_folder()
             s.prepare_ligands()
 
         def prepare_screening(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
             s.prepare_screening()
 
         def test_get_docking_executable(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
             docking_engine = {
                 "fwavina",
                 "vina",
@@ -926,16 +943,19 @@ if __name__ == "__main__":
                 s.get_docking_executable(docking_program)
 
         def test_run_vina(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program)
 
             s.run_vina(self, "out_path", "lig_path", "rec_path")
 
         def test_run_screening_prepare_true(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program, prepare=True)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program, prepare=True)
             s.run_screening()
 
         def test_run_screening_prepare_False(self):
-            s = VinaScreening(self.ligands, self.receptors, self.out, self.docking_program, prepare=False)
+            s = VinaScreening(self.ligands, self.receptors,
+                              self.out, self.docking_program, prepare=False)
             s.run_screening()
 
     def test_vina():
