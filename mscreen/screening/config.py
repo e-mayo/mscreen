@@ -162,6 +162,8 @@ class PlantsWriter(Writer):
         self.lines = lines
         return lines
 
+class DockWriter(PlantsWriter):
+    pass
 
 class LedockWriter(Writer):
     
@@ -224,7 +226,19 @@ class VinaReader(Reader):
         return keywords
 
 
+class DockReader(Reader):
   
+    def get_prop(self):
+        text = self.clean_text()
+        # pattern = r'(^\w+\s+)((?:[\w\.]+\s?){,3})'
+        # pattern = r'^(\w+)\s*(?:\s*([\w._\\/-:,\s]+))?'
+        pattern = r'^(\S+)\s+(\S+)'
+        p = re.compile(pattern,re.M)
+        props = p.findall(text)
+        keywords = {}
+        for prop in props:
+            keywords[prop[0].strip()] = prop[1].strip()
+        return keywords  
 
 class PlantsReader(Reader):
   
@@ -282,11 +296,13 @@ reader = ConfReader()
 reader.register_reader('vina', VinaReader)
 reader.register_reader('ledock', LedockReader)
 reader.register_reader('plants', PlantsReader)
+reader.register_reader('dock', DockReader)
 
 writer = ConfWriter()
 writer.register_writer('vina', VinaWriter)
 writer.register_writer('ledock', LedockWriter)
 writer.register_writer('plants', PlantsWriter)
+writer.register_writer('dock', PlantsWriter)
 # =============================================================================
 # COVERT CONF FILE
 # =============================================================================
@@ -494,85 +510,87 @@ class ConfConverter:
 
 #%%
 if __name__ =='__main__':
-    # =============================================================================
-    # Test LedockReader
-    # =============================================================================
-    print('#'*72)    
-    print('#'*72)    
-    s = LedockReader('config_ledock_sample.txt', 'ledock')
-    # pattern = r'#.*\n'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',s.text)
-    # pattern = r'\n+'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',text)
-    # print(text)
-    print(len(s.get_prop()))
-    for  i in s.get_prop():
-        print(i,'-',s.get_prop()[i])
-    print('#'*72)    
-    print('#'*72) 
-    #%% =============================================================================
-    # Test VinaReader
-    # =============================================================================
-    print('#'*72)    
-    print('#'*72)    
-    s = VinaReader('config_smina_sample.txt', 'plants')    
-    # pattern = r'#.*\n'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',s.text)
-    # pattern = r'\n+'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',text)
-    # print(text)
-    print(len(s.get_prop()))
-    k = s.get_prop()
-    for  i in k.keys():
-        print(i,'-',k[i])
-    k.keys()
-    print(k.values())
-    print('#'*72)    
-    print('#'*72)      
-    #%% =============================================================================
-    # TEST PlantsReader
-    # =============================================================================
-    print('#'*72)    
-    print('#'*72)    
-    s = PlantsReader('config_plants_sample.txt', 'plants')
-    # pattern = r'#.*\n'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',s.text)
-    # pattern = r'\n+'
-    # p = re.compile(pattern,re.M)
-    # text = p.sub('\n',text)
-    # print(text)
-    print(len(s.get_prop()))
-    for  i in s.get_prop():
-        print(i,'-',s.get_prop()[i])
-    print('#'*72)    
-    print('#'*72)     
+    # # =============================================================================
+    # # Test LedockReader
+    # # =============================================================================
+    # print('#'*72)    
+    # print('#'*72)    
+    # s = LedockReader('config_ledock_sample.txt', 'ledock')
+    # # pattern = r'#.*\n'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',s.text)
+    # # pattern = r'\n+'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',text)
+    # # print(text)
+    # print(len(s.get_prop()))
+    # for  i in s.get_prop():
+    #     print(i,'-',s.get_prop()[i])
+    # print('#'*72)    
+    # print('#'*72) 
+    # #%% =============================================================================
+    # # Test VinaReader
+    # # =============================================================================
+    # print('#'*72)    
+    # print('#'*72)    
+    # s = VinaReader('config_smina_sample.txt', 'plants')    
+    # # pattern = r'#.*\n'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',s.text)
+    # # pattern = r'\n+'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',text)
+    # # print(text)
+    # print(len(s.get_prop()))
+    # k = s.get_prop()
+    # for  i in k.keys():
+    #     print(i,'-',k[i])
+    # k.keys()
+    # print(k.values())
+    # print('#'*72)    
+    # print('#'*72)      
+    # #%% =============================================================================
+    # # TEST PlantsReader
+    # # =============================================================================
+    # print('#'*72)    
+    # print('#'*72)    
+    # s = PlantsReader('config_plants_sample.txt', 'plants')
+    # # pattern = r'#.*\n'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',s.text)
+    # # pattern = r'\n+'
+    # # p = re.compile(pattern,re.M)
+    # # text = p.sub('\n',text)
+    # # print(text)
+    # print(len(s.get_prop()))
+    # for  i in s.get_prop():
+    #     print(i,'-',s.get_prop()[i])
+    # print('#'*72)    
+    # print('#'*72)     
     
-    #%% =============================================================================
-    # Test ConfReader
-    # =============================================================================
+    # #%% =============================================================================
+    # # Test ConfReader
+    # # =============================================================================
     
     reader = ConfReader()
     reader.register_reader('vina', VinaReader)
     reader.register_reader('ledock', LedockReader)
     reader.register_reader('plants', PlantsReader)
+    reader.register_reader('dock', DockReader)
     
  
-    vina_keywords   = reader.read_conf('config_vina_sample.txt', 'vina')
-    ledock_keywords = reader.read_conf('config_ledock_sample.txt', 'ledock')
-    plants_keywords = reader.read_conf('config_plants_sample.txt', 'plants')
-    
-    keywords = plants_keywords
+    # vina_keywords   = reader.read_conf('config_vina_sample.txt', 'vina')
+    # ledock_keywords = reader.read_conf('config_ledock_sample.txt', 'ledock')
+    # plants_keywords = reader.read_conf('config_plants_sample.txt', 'plants')
+    dock_keywords = reader.read_conf('../data/config_dock_sample.txt', 'dock')
+
+    keywords = dock_keywords
     print(len(keywords))
     for  i in keywords:
         print(i,'-',keywords[i])
-    #%% =============================================================================
-    # Test ConfWriter
-    # =============================================================================
+    # #%% =============================================================================
+    # # Test ConfWriter
+    # # =============================================================================
     print('# '+'='*70)
     print('#     Test Write')
     print('# '+'='*70)
@@ -580,46 +598,48 @@ if __name__ =='__main__':
     writer.register_writer('vina', VinaWriter)
     writer.register_writer('ledock', LedockWriter)
     writer.register_writer('plants', PlantsWriter)
+    writer.register_writer('dock', DockWriter)
     
-    writer.write_conf(vina_keywords, 'vina', 'cvina_writer.txt')
-    writer.write_conf(ledock_keywords, 'ledock', 'cledock_writer.txt')
-    writer.write_conf(plants_keywords, 'plants', 'cplants_writer.txt')
+    # writer.write_conf(vina_keywords, 'vina', 'cvina_writer.txt')
+    # writer.write_conf(ledock_keywords, 'ledock', 'cledock_writer.txt')
+    # writer.write_conf(plants_keywords, 'plants', 'cplants_writer.txt')
+    writer.write_conf(dock_keywords, 'dock', 'cdock_writer.txt')
     
-    #%% =============================================================================
-    # TEST VinaWriter    
-    # =============================================================================
-    w = VinaWriter(vina_keywords,'vina','conf_vina_writer.txt')
-    w.write()
-    #%% =============================================================================
-    # TEST PlantsWriter
-    # =============================================================================
-    w = PlantsWriter(plants_keywords,'platns','conf_plants_writer.txt')
-    w.write()
-    #%% =============================================================================
-    # TEST LedockWriter
-    # =============================================================================
-    w = LedockWriter(ledock_keywords,'ledock','conf_ledock_writer.txt')
-    w.write()
-    #%% =============================================================================
-    # TEST speed_coverter    
-    # =============================================================================
-    ConfConverter.speed_coverter(vina_keywords)
-    ConfConverter.speed_coverter(plants_keywords)
-    #%%
-    # =============================================================================
-    # Test coordinates transform
-    # =============================================================================
-    vina_box = {'center_x':-0.2 ,
-                'center_y':-0.4,
-                'center_z':1.9 ,
-                'size_x': 14.1,
-                'size_y': 17.1,
-                'size_z': 15.1}
-    vina_box = {'center_x': 54.0,
-                'center_y':-19.4,
-                'center_z':38.4,
-                'size_x':17.3,
-                'size_y':13.0,
-                'size_z':17.4}
+    # #%% =============================================================================
+    # # TEST VinaWriter    
+    # # =============================================================================
+    # w = VinaWriter(vina_keywords,'vina','conf_vina_writer.txt')
+    # w.write()
+    # #%% =============================================================================
+    # # TEST PlantsWriter
+    # # =============================================================================
+    # w = PlantsWriter(plants_keywords,'platns','conf_plants_writer.txt')
+    # w.write()
+    # #%% =============================================================================
+    # # TEST LedockWriter
+    # # =============================================================================
+    # w = LedockWriter(ledock_keywords,'ledock','conf_ledock_writer.txt')
+    # w.write()
+    # #%% =============================================================================
+    # # TEST speed_coverter    
+    # # =============================================================================
+    # ConfConverter.speed_coverter(vina_keywords)
+    # ConfConverter.speed_coverter(plants_keywords)
+    # #%%
+    # # =============================================================================
+    # # Test coordinates transform
+    # # =============================================================================
+    # vina_box = {'center_x':-0.2 ,
+    #             'center_y':-0.4,
+    #             'center_z':1.9 ,
+    #             'size_x': 14.1,
+    #             'size_y': 17.1,
+    #             'size_z': 15.1}
+    # vina_box = {'center_x': 54.0,
+    #             'center_y':-19.4,
+    #             'center_z':38.4,
+    #             'size_x':17.3,
+    #             'size_y':13.0,
+    #             'size_z':17.4}
     
-    plants_box = ConfConverter.coor_vina_to_plants(vina_box)
+    # plants_box = ConfConverter.coor_vina_to_plants(vina_box)

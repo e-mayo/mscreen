@@ -1,5 +1,6 @@
 import re
-import numpy as np
+# import numpy as np
+from math import sqrt
 
 aa3 = {'ALA':'A','CYS':'C','ASP':'D','GLU':'E','PHE':'F',\
 'GLY':'G','HIS':'H','ILE':'I','LYS':'K','LEU':'L','MET':'M',\
@@ -11,7 +12,10 @@ aa3 = {'ALA':'A','CYS':'C','ASP':'D','GLU':'E','PHE':'F',\
 class Atom:
 
     def __init__(self, record, atom_id, atom_name,
-                        alt_loc, res_name, chain_id,                        res_seq, i_code, coord_x,                        coord_y, coord_z, occ,                        t_factor, elem, charge, string=None):
+                        alt_loc, res_name, chain_id,
+                        res_seq, i_code, coord_x,
+                        coord_y, coord_z, occ,
+                        t_factor, elem, charge, string=None):
         self.record = record.strip()
         self.atom_id = int(atom_id)
         self.atom_name = atom_name.strip()
@@ -121,7 +125,7 @@ def distance(x1,y1,z1,x2,y2,z2):
     x_sqrt = (x2 -  x1)**2
     y_sqrt = (y2 -  y1)**2
     z_sqrt = (z2 -  z1)**2
-    return np.sqrt(x_sqrt + y_sqrt + z_sqrt)
+    return sqrt(x_sqrt + y_sqrt + z_sqrt)
 
 def process_pdb_file(pdb_file):
     pdb_text = read_pdb_file(pdb_file)
@@ -202,7 +206,23 @@ def read_pdb_file(pdb_file,as_lines = False):
     return pdb_text
 
 def extract_near_residues_as_pdb(in_pdb_file,out_pdb_file,ref,radii=20):
-    chains = process_pdb_file(pdb_file)
+    """
+    Read a PDB file and parse protein information.
+    Select residues within radii of ref coordinates.
+    Write a PDB file of the fragment after renumbering residues and atoms.
+    This might fix any dms problem related to residues/atom numbers.
+    Parameters:
+    ----------
+    in_pdb_file str:
+        PDB in file name
+    out_pdb_file str:
+        PDB out file name
+    ref list:
+        Center of reference, [x, y, z]
+    radii int:
+        Cutoff radio. Default 20
+    """
+    chains = process_pdb_file(in_pdb_file)
     protein = chains[0]    
     selection = select(ref, radii, protein, byres=True)
     renumberin_atoms_list(selection)
@@ -258,6 +278,52 @@ def renumbering(protein,resi=True,atomi=False, save_as=False):
 # line[76:78]  #LString(2)    element      Element symbol, right-justified.
 # line[78:80]  #LString(2)    charge       Charge  on the atom.
 # ammino acids 3 letters code
+#%%
+import numpy as np
+
+
+def calc_mol_center(mol2_file):
+    """
+    Calculate molecular center.
+
+    Parameters
+    ----------
+    mol2_file : str
+        Reference molecule.
+
+    Returns
+    -------
+    center : np.array [x,y,z]
+        Center of reference calculated as the average of all atoms coordinates.
+
+    """
+    with  open(mol2_file, "r") as f:
+        lines = f.readlines()
+    atom_xyz_list = []
+    
+    for line in lines:
+        if line.startswith("@<TRIPOS>"):
+            if "ATOM" in line:
+                atom_record = True
+                continue
+            else:
+                atom_record = False
+        if atom_record:
+            atom_line = line.split()
+            
+            atom_id  = int(atom_line[0])
+            atom_name = str(atom_line[1])
+            coord_x  = float(atom_line[2])
+            coord_y  = float(atom_line[3])
+            coord_z  = float(atom_line[4])
+            elem     = str(atom_line[5])
+            chain_id = int(atom_line[6])
+            res_name = str(atom_line[7])
+            charge   = float(atom_line[8])
+            atom_xyz_list.append([coord_x, coord_y, coord_z])
+    atoms = np.array(atom_xyz_list)
+    return atoms.mean(axis=0)
+#%%
 if __name__ == '__main__':
     
     pdb_file = 'rec_3ebh.pdb'

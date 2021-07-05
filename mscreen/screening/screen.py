@@ -12,8 +12,18 @@ from time import time
 from pathlib import Path
 from shutil import copy, rmtree, which
 
+
+# from utils import rename_old
+# import prepare_vina
+# import prepare_dock
+# # from utils import multi_threading, count_processors
+
+# from config import reader
+# from config import writer
+
 from screening.utils import rename_old
 from screening import prepare_vina
+from screening import prepare_dock
 from multiprocess.utils import multi_threading, count_processors
 
 from screening.config import reader
@@ -259,7 +269,7 @@ class Screening:
         if file.suffix in self.SUPPORTED_FORMATS:
             return True
         else:
-            print(f"{file.name} has not supported formats")
+            print(f"{file.name} has not a supported formats")
             print(
                 f"Please convert it to any supported \
                   formats: {self.SUPPORTED_FORMATS}"
@@ -395,6 +405,185 @@ class Screening:
 
 #
 
+class DOCKScreening(Screening):
+    def __init__(
+        self,
+        ligands,
+        receptors,
+        out="out",
+        conf="conf.txt",
+        docking_program="dock",
+        prepare=False,
+        verbose=False,
+        log_file=None,
+        exe_file="exe.paths",
+    ):
+
+        self.SUPPORTED_FORMATS = (
+            ".mol2", ".pdb")
+
+        self.verbose = verbose
+        self.docking_program = docking_program
+        self.ligand_folder = Path(ligands)
+        self.ligands = list(self.ligand_folder.iterdir())
+        # self.ligands = []
+        self.ligands_mol2 = []
+        self.receptors_mol2 = []
+        self.prepare = prepare
+        self.receptors_prepared = []
+        self.ligands_prepared = []
+        self.receptors_folder = Path(receptors)
+        self.receptors = list(self.receptors_folder.iterdir())
+        # self.receptors = []
+        self.out_folder = Path(out)
+        self.conf = Path(conf)
+        # self.prepared_ligand_folder = prepared_ligand_folder
+        # self.prepared_receptors_folder = prepared_receptors_folder
+        self.log_file = log_file
+        if exe_file:
+            self.exe = self.read_exeFile(Path(exe_file))
+
+    def prepare_receptors(self):
+        """
+        Prepare receptor for DOCK6. The receptor must be preprocessed 
+        (delete solvent, add hiydrogens, fill missing residues/atoms). 
+        Prepare means:
+        - generate receptor surface  [dms]
+        - calculate spheres  [sphgen] 
+        - select sphere within x Angstrom from the binding site [sphere_selector]
+        - box generation [showbox]
+        - grid generation [grid]
+        """
+        
+        receptors_prepared = []
+        for rec in self.receptors:
+            # pdb and mol2 supported by DOCK, 
+            # but extract nearatoms is not implemented for pdb file
+            self.SUPPORTED_FORMATS = ['.pdb']
+            if not self._check_format_(rec):
+                continue
+            if self.verbose:
+                print(f"\n\npreparing receptor {rec.name}")
+            out = self.prepared_receptors_folder / f"{rec.stem}"
+            
+            # preprocess receptor using prepdock # only output as mol2, PDB is needed
+            # prepare_dock.dockprep_chimera(rec, out)
+            
+            # generating required file for docking (dms, sph, grid)
+            prepare_dock.prepare_receptor_dock(rec,
+                                               self.ligands[0],
+                                               out_folder = self.prepared_receptors_folder,
+                                               sph_selector_cut_off=10.0,
+                                               ref=None) 
+            
+            receptors_prepared.append(out)
+        self.receptors = receptors_prepared
+
+    def prepare_ligands(self):
+        """
+        This function prepare ligands for DOCK6
+        """
+        ligands_prepared = []
+        self.SUPPORTED_FORMATS = ['.mol2']
+        for lig in self.ligands:
+            # .mol2
+            if not self._check_format_(lig):
+                continue
+            if self.verbose:
+                print(f"\n\npreparing ligand {lig.name}")
+            # self.fix_multiplefragment(lig)
+            kwargs = {"verbose": True}
+            out = self.prepared_ligand_folder / f"{lig.stem}.mol2"
+            prepare_dock.prepare_ligand_dock(lig, out)
+            ligands_prepared.append(out)
+        self.ligands = ligands_prepared
+
+    def prepare_screening(self):
+        """
+        This function prepare ligands and receptor with the required format 
+        of the docking program used. It must be overwrited 
+        in all screening class.         
+        """
+        self.prepared_folder(folder_name="dock")
+        self.prepare_receptors()
+        self.prepare_ligands()
+
+    def run_screening(self, init_screening=True):
+
+        if init_screening:
+            self.init_screening()
+
+        if self.prepare:
+            self.logger("#Preparing ligand and receptors")
+            self.prepare_screening()
+
+        self.logger("#" * 72)
+        self.logger(f"#Running virtual screening using {self.docking_program}")
+        self.logger("#" * 72)
+
+        for rec in self.receptors:
+            # if rec.suffix != ".mol2":
+                # continue
+            list_args = []
+            for lig in self.ligands:
+                # if lig.suffix != ".mol2":
+                    # continue
+                if self.verbose:
+                    self.logger(f"#Docking {lig.name} in {rec.name}")
+                #                if os.listdir(self.ligand_folder).index(lig) <= x:
+                #                    continue
+                out_path = self.out_folder / rec.stem / lig.stem
+                os.mkdir(out_path)
+                t0 = time()
+                self.run_dock(out_path, lig, rec)
+                list_args.append((out_path, lig, rec))
+                self.logger(
+                    f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
+    
+    def run_dock(self, out_path, lig_path, rec_path):
+
+        conf_file = self.out_folder / rec_path.stem / \
+            f"{rec_path.stem}-{lig_path.stem}-conf.txt"
+        
+        rec_file = rec_path
+        rec_name = rec_file.stem
+        
+        if 'frag-' in rec_name: # if the recepetor is already prepared skip fragment renaming
+            rec_name = rec_name.replace('frag-','')
+        
+        frag_name = f"frag-{rec_name}"
+
+        frag_file = rec_file.parent / f"{frag_name}.pdb"
+        sph_file = rec_file.parent / f"{frag_name}.sph"
+        sel_file = rec_file.parent / f'{sph_file.stem}-sele.sph'
+        grid_prefix = rec_file.parent / f'{rec_file.stem}-grid'.replace('frag-','') # solve frag-naming
+        ligand_outfile_prefix = out_path / f'{rec_file.stem}-{lig_path.stem}-flex-out'
+        
+        keywords = {
+            "receptor_site_file": sel_file, #sph_file
+            "ligand_atom_file": lig_path,
+            "grid_score_grid_prefix": grid_prefix,  #grid_prefix.
+            "ligand_outfile_prefix": ligand_outfile_prefix,
+        }
+
+        # print(reader.read_conf(self.conf, "dock"))
+        dock_keywords = reader.read_conf(self.conf, self.docking_program)
+        dock_keywords = {**dock_keywords, **keywords}
+        writer.write_conf(dock_keywords, "dock", conf_file)
+        docking_executable = self.get_docking_executable(self.docking_program)
+        command = f"{docking_executable} -i {conf_file} -o {conf_file}-out.txt "
+        os.system(command)
+        # os.popen(command).read()
+
+    
+    def get_docking_executable(self, docking_program):
+
+        docking_engine = {
+            "dock": "dock6",  # linux & winc
+        }
+
+        exe_name = docking_engine[docking_program]
+        return self._get_executable_(exe_name)
 
 class VinaScreening(Screening):
     def prepare_receptors(self):
@@ -631,6 +820,7 @@ class PlantsScreening(Screening):
                 #                if os.listdir(self.ligand_folder).index(lig) <= x:
                 #                    continue
                 out_path = self.out_folder / rec.stem / lig.stem
+                # os.mkdir(out_path)
                 t0 = time()
 
                 # self.run_plants(out_path, lig, rec)
@@ -890,6 +1080,7 @@ vsprotocol.register_program("smina", VinaScreening)
 
 vsprotocol.register_program("plants", PlantsScreening)
 vsprotocol.register_program("ledock", LedockScreening)
+vsprotocol.register_program("dock", DOCKScreening)
 
 # %%
 if __name__ == "__main__":
@@ -997,26 +1188,26 @@ if __name__ == "__main__":
         receptors = Path("../../data/receptor")
         ligands = Path("../../data/ligands")
         receptors = Path("../../data/receptor")
-        ligands = Path("../../data/prepare/prepared_ligands_plants")
-        receptors = Path("../../data/prepare/prepared_receptors_plants")
-        out = Path("./our-test-multiprocess-plants")
+        # ligands = Path("../../data/prepare/prepared_ligands_plants")
+        # receptors = Path("../../data/prepare/prepared_receptors_plants")
+        out = Path("../../data/our-plants")
         conf = Path("../../data/config_plants_speed4.txt")
         docking_program = "plants"
         s = PlantsScreening(
-            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=False, exe_file="../exe.paths"
+            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=True, exe_file="../exe.paths"
         )
         # s.init_screening()
         # s.prepared_folder('plants')
         # s.prepare_ligands()
         # s.prepare_receptors()
-        # s.prepare_screening()
+        s.prepare_screening()
         # i = [l for l in ligands.iterdir()][0]
         # o = i.parent / f"{i.stem}-prep.mol2"
         # s.run_spores(i, o)
         # s.get_docking_executable("plants")
         s.run_screening(init_screening=True)
 
-    test_plants()
+    # test_plants() 
 
     # %%===========================================================================
     # Ledock Test
@@ -1086,3 +1277,33 @@ if __name__ == "__main__":
     # s.init_screening()
     # # s.prepare_screening(verbose=1)
     # s.run_screening()
+
+    # =============================================================================
+    # Test DOCK
+    # =============================================================================
+
+    def test_DOCK():
+        ligands = Path("../../data/ligands")
+        receptors = Path("../../data/receptor")
+        ligands = Path("../../data/ligands")
+        receptors = Path("../../data/receptor")
+        # ligands = Path("../../data/prepare/prepared_ligands_dock")
+        # receptors = Path("../../data/prepare/prepared_receptors_dock")
+        out = Path("../../data/out2-dock")
+        conf = Path("../../data/config_dock_flex_sample.txt")
+        docking_program = "dock"
+        s = DOCKScreening(
+            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=True, exe_file="../exe.paths"
+        )
+        # s.init_screening()
+        # s.prepared_folder('DOCK')
+        # s.prepare_ligands()
+        # s.prepare_receptors()
+        # s.prepare_screening()
+        # i = [l for l in ligands.iterdir()][0]
+        # o = i.parent / f"{i.stem}-prep.mol2"
+        # s.run_spores(i, o)
+        # s.get_docking_executable("DOCK")
+        s.run_screening()
+
+    # test_DOCK() 

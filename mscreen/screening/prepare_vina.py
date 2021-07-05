@@ -13,6 +13,7 @@ from pathlib import  Path
 # print(cwd)
 # os.chdir(Path('autodocktools_prepare_py3k/'))
 sys.path.append('autodocktools_prepare_py3k')
+sys.path.append('mscreen/autodocktools_prepare_py3k')
 # print(f'####################### { Path.cwd()}')
 from AutoDockTools.Utilities24.prepare4 import prepare_ligand4, prepare_receptor4
 # os.chdir(cwd)

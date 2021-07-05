@@ -176,18 +176,19 @@ class VinaAnalysis(Analysis):
         screened_molecules = {}
         screened_molecules[receptor_path.name] = []
         threashold = 2
-        site = np.array([10.2, 42.7, 40.8])
+        # site = np.array([10.2, 42.7, 40.8])
         radius = 1.5
-        sdf_propierties = ["file_name", "vina_pose", "vina_score", "cluster_id", "clust_lenght", "best_pose", "in_site"]
+        # sdf_propierties = ["file_name", "vina_pose", "vina_score", "cluster_id", "clust_lenght", "best_pose", "in_site"]
+        sdf_propierties = ["file_name", "vina_pose", "vina_score", "cluster_id", "clust_lenght"]
 
         ligands_paths = [l for l in receptor_path.iterdir() if l.is_dir()]
         for ligand_path in ligands_paths:
             if self.is_empty(ligand_path):continue
             lig_result = self.pdbqt2sdf(ligand_path)
             lig_result = engine.qt_cluster_a_mol_list(lig_result, threashold)
-            lig_result = engine.get_representative_clust(lig_result,key_energy='vina_score')
+            # lig_result = engine.get_representative_clust(lig_result,key_energy='vina_score')
             for mol in lig_result:
-                engine.find_mol_within_site_square(mol, site, radius, 3)
+                # engine.find_mol_within_site_square(mol, site, radius, 3)
                 screened_molecules[receptor_path.name].append(mol)
         sdf_name = receptor_path.parent / "screeining_result_rec_{}".format(receptor_path.name)
         self.write_sdf(sdf_name, screened_molecules[receptor_path.name], write_props=sdf_propierties)
