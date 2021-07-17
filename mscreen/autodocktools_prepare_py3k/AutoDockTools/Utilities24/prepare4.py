@@ -1,5 +1,8 @@
-import os, sys 
-
+import os, sys
+from pathlib import  Path
+sys.path.append('autodocktools_prepare_py3k')
+sys.path.append('../../../../mscreen/autodocktools_prepare_py3k')
+sys.path.append('mscreen/autodocktools_prepare_py3k')
 from MolKit import Read
 
 import MolKit.molecule
@@ -7,7 +10,7 @@ import MolKit.protein
 from AutoDockTools.MoleculePreparation import AD4ReceptorPreparation
 from AutoDockTools.MoleculePreparation import AD4LigandPreparation
 
-
+# add # Use prepare_pdb_split_alt_confs.py to create pdb files containing a single conformation. fix
 def prepare_ligand4(ligand_filename,
                     verbose = None,
                     add_bonds = False,
@@ -68,11 +71,15 @@ def prepare_ligand4(ligand_filename,
     dictionary: str, optional
         Dictionary to write strs list and number of active torsions. The default is None.
     """
+    ligand_filename = Path(ligand_filename)
+    if not ligand_filename.exists():
+        print(f"{ligand_filename} doesn't exist")
+        return False
+
     
-    if ligand_filename:
-        ligand_filename = ligand_filename
-        if verbose: print('set ligand_filename to ', ligand_filename)
-        ligand_ext = os.path.splitext(os.path.basename(ligand_filename))[1] # eg .mol2  
+    ligand_filename = str(ligand_filename)
+    if verbose: print('set ligand_filename to ', ligand_filename)
+    ligand_ext = os.path.splitext(os.path.basename(ligand_filename))[1] # eg .mol2  
     if verbose:
         if verbose: print('set verbose to ', True)
     if outputfilename:
@@ -393,13 +400,316 @@ def prepare_receptor4(receptor_filename,
         for atom, chargeList in list(preserved.items()):
             atom._charges[chargeList[0]] = chargeList[1]
             atom.chargeSet = chargeList[0]
-            
+
+import _py2k_string as string
+from AutoDockTools.GridParameters import GridParameters, grid_parameter_list4
+from AutoDockTools.GridParameters import GridParameter4FileMaker
+from AutoDockTools.atomTypeTools import AutoDock4_AtomTyper           
+
+def prepare_gpf4(receptor_filename=None,
+                ligand_filename = None,
+                list_filename = None,
+                gpf_filename = None,
+                output_gpf_filename = None,
+                flexres_filename = None,
+                directory = None,
+                list_parameters_str = None,
+                verbose = None,
+                center_on_ligand = False,
+                size_box_to_include_ligand = True,
+                npts_increment = 0,
+                ligand_types_defined=False):   
+    """
+
+    Parameters
+    ----------
+    receptor_filename : str, optional
+        DESCRIPTION. The default is None.
+    ligand_filename : str, optional
+        ligand_filename (.pdbq format). The default is None.
+    list_filename : TYPE, optional
+        DESCRIPTION. The default is None.
+    gpf_filename : str, optional
+        reference_gpf_filename. The default is None.
+    output_gpf_filename : str, optional
+        output_gpf_filename. The default is None.
+    flexres_filename : TYPE, optional
+        flexres_filename. The default is None.
+    directory : TYPE, optional
+        directory of ligands to use to set types. The default is None.
+    parameters : str, optional
+        parameter=newvalue. For example: -p ligand_types='HD,Br,A,C,OA' or p npts='60,60,66' or gridcenter='2.5,6.5,-7.5']". The default is [].
+    verbose : TYPE, optional
+        DESCRIPTION. The default is None.
+    center_on_ligand : TYPE, optional
+        boolean to center grids on center of ligand. The default is False.
+    size_box_to_include_ligand : TYPE, optional
+        boolean to NOT size_box_to_include_ligand. The default is True.
+    npts_increment : int, optional
+        increment npts in all 3 dimensions by this integer. The default is 0.
+    ligand_types_defined : TYPE, optional
+        DESCRIPTION. The default is False.
+    verbose : TYPE, optional
+        print stuff. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
+    parameters = []
+    
+    if ligand_filename:
+        if verbose: print('ligand_filename=', ligand_filename)
+    if receptor_filename:
+        if verbose: print('receptor_filename=', receptor_filename)
+    if gpf_filename:
+        if verbose: print('reference_gpf_filename=', gpf_filename)
+    if flexres_filename:
+        if verbose: print('flexres_filename=', flexres_filename)
+    if output_gpf_filename:
+        if verbose: print('output_gpf_filename=', output_gpf_filename)
+    if list_parameters_str:
+        for parameters_str in list_parameters_str:
+            parameters.append(parameters_str)
+            if parameters_str.split('=')[0]=="ligand_types": ligand_types_defined = True
+        if verbose: print('parameters=', parameters)
+    if directory:
+        if verbose: print('directory=', directory)
+    if center_on_ligand:
+        if verbose: print('set center_on_ligand to ', center_on_ligand)
+    if not size_box_to_include_ligand:
+        if verbose: print('set size_box_to_include_ligand to ', size_box_to_include_ligand)
+    if npts_increment:
+        npts_increment = int(npts_increment)
+        if verbose: print('set npts_increment to ', npts_increment)
+        
+    if (not receptor_filename) or (ligand_filename is None and directory is None and ligand_types_defined is False):
+        print("prepare_gpf4.py: ligand and receptor filenames")
+        print("                    must be specified.")
+        return None
+    
+    gpfm = GridParameter4FileMaker(size_box_to_include_ligand=size_box_to_include_ligand,verbose=verbose)
+    if gpf_filename is not None:
+        gpfm.read_reference(gpf_filename)
+    if ligand_filename is not None:
+        gpfm.set_ligand(ligand_filename)
+    gpfm.set_receptor(receptor_filename)
+    if directory is not None:
+        gpfm.set_types_from_directory(directory)
+    if flexres_filename is not None:
+        flexmol = Read(flexres_filename)[0]
+        flexres_types = flexmol.allAtoms.autodock_element
+        lig_types = gpfm.gpo['ligand_types']['value'].split()
+        all_types = lig_types
+        for t in flexres_types:
+            if t not in all_types:
+                all_types.append(t)
+        all_types_string = all_types[0]
+        if len(all_types)>1:
+            for t in all_types[1:]:
+                all_types_string = all_types_string + " " + t
+        gpfm.gpo['ligand_types']['value'] = all_types_string
+    for param_str in parameters:
+        if param_str.find("parameter_file")>-1:
+            parameters.append("custom_parameter_file=1")
+            break
+    for p in parameters:
+        key,newvalue = string.split(p, '=')
+        if key=='gridcenter' and newvalue.find(',')>-1:
+            newvalue = newvalue.split(',')
+            newvalue = string.join(newvalue)
+        kw = {key:newvalue}
+        gpfm.set_grid_parameters(*(), **kw)
+    #gpfm.set_grid_parameters(spacing=1.0)
+    if center_on_ligand is True:
+        gpfm.gpo['gridcenterAuto']['value'] = 0
+        cenx,ceny,cenz = gpfm.ligand.getCenter()
+        gpfm.gpo['gridcenter']['value'] = "%.3f %.3f %.3f" %(cenx,ceny,cenz)
+    if npts_increment:
+        orig_npts = gpfm.gpo['npts']['value']  #[40,40,40]
+        if verbose: print("before increment npts=", orig_npts)
+        for ind in range(3):
+            gpfm.gpo['npts']['value'][ind] += npts_increment
+        if verbose: print("after increment npts =", gpfm.gpo['npts']['value'])
+    gpfm.write_gpf(output_gpf_filename)
+    return True
+
+import _py2k_string as string
+import os.path
+from MolKit import Read
+from AutoDockTools.DockingParameters import DockingParameters, genetic_algorithm_list4_2, \
+                genetic_algorithm_local_search_list4_2, local_search_list4_2,\
+                simulated_annealing_list4_2, epdb_list4_2,\
+                DockingParameter42FileMaker
+
+from AutoDockTools.atomTypeTools import AutoDock4_AtomTyper
+import numpy
+
+def prepare_dpf42(receptor_filename = None,
+                    ligand_filename = None,
+                    dpf_filename = None,
+                    template_filename = None,
+                    flexres_filename = None,
+                    list_parameters_str = None,
+                    pop_seed = False,
+                    local_search=False,
+                    use_simulated_annealing=False,
+                    verbose = None,
+                    epdb_output = False,
+                    about_root_atoms_only=False):
+    
+    parameters = []
+    parameter_list = genetic_algorithm_local_search_list4_2
+
+    if ligand_filename:
+        if verbose: print('ligand_filename =', ligand_filename)
+    if receptor_filename:
+        if verbose: print('receptor_filename =', receptor_filename)
+    if flexres_filename:
+        if verbose: print('flexres_filename =', flexres_filename)
+    if template_filename:
+        if verbose: print('template_filename =', template_filename)
+    if dpf_filename:
+        if verbose: print('output dpf_filename =', dpf_filename)
+    if list_parameters_str:
+        for parameters_str in list_parameters_str:
+            parameters.append(parameters_str)
+        if verbose: print('parameters =', parameters)
+    if epdb_output:
+        if verbose: print('output epdb file')
+        parameter_list = epdb_list4_2
+    if parameter_list:
+        if verbose: print('parameter_list =', parameter_list)
+    if local_search:   #parameter_list_to_write
+        local_search = 1
+        parameter_list = local_search_list4_2
+        if verbose: print('parameter_list =', parameter_list)
+    if use_simulated_annealing:   #parameter_list_to_write
+        parameter_list = simulated_annealing_list4_2
+        if verbose: print('parameter_list =', parameter_list)
+    if about_root_atoms_only:   #set about to average of coords of root atoms
+        if verbose: print('about_root_atoms_only =', about_root_atoms_only)
+    if pop_seed:
+        pop_seed = True
+        if verbose: print('pop_seed =', pop_seed)
+    
+    if (not receptor_filename) or (not ligand_filename):
+        print("prepare_dpf42.py: ligand and receptor filenames")
+        print("                    must be specified.")
+
+
+
+    #11/2011: fixing local_search bugs:
+    # specifically:
+    # 1. quaternion0 0 0 0 0
+    # 2. dihe0 0 0 0 0 0 <one per rotatable bond>
+    # 3. about == tran0
+    # 4. remove tstep  qstep and dstep
+    # 5. remove ls_search_freq
+    #local_search = local_search_list4_2
+    #parameter_list =local_search_list4_2
+    dm = DockingParameter42FileMaker(verbose=verbose, pop_seed=pop_seed)
+    if template_filename is not None:  #setup values by reading dpf
+        dm.dpo.read(template_filename)
+    dm.set_ligand(ligand_filename)
+    dm.set_receptor(receptor_filename)
+    if flexres_filename is not None:
+        flexmol = Read(flexres_filename)[0]
+        flexres_types = flexmol.allAtoms.autodock_element
+        lig_types = dm.dpo['ligand_types']['value'].split()
+        all_types = lig_types
+        for t in flexres_types:
+            if t not in all_types:
+                all_types.append(t)
+        all_types_string = all_types[0]
+        if len(all_types)>1:
+            for t in all_types[1:]:
+                all_types_string = all_types_string + " " + t
+                if verbose: print("adding ", t, " to all_types->", all_types_string)
+        dm.dpo['ligand_types']['value'] = all_types_string
+        dm.dpo['flexres']['value'] = flexres_filename
+        dm.dpo['flexres_flag']['value'] = True
+    #dm.set_docking_parameters( ga_num_evals=1750000,ga_pop_size=150, ga_run=20, rmstol=2.0)
+    kw = {}
+    for p in parameters:
+        key,newvalue = string.split(p, '=')
+        #detect string reps of lists: eg "[1.,1.,1.]"
+        if key=='parameter_file':
+            if key in parameter_list:
+                print("removing parameter_file keyword")
+                parameter_list.remove('parameter_file')
+            parameter_list.insert(1, key)
+            dm.dpo['custom_parameter_file']['value']=1
+        if newvalue[0]=='[':
+            nv = []
+            for item in newvalue[1:-1].split(','):
+                nv.append(float(item))
+            #print "nv=", nv
+            newvalue = nv
+            kw[key] = nv
+            if verbose: print("newvalue=", nv, " kw=", kw)
+        elif key=='epdb_flag':
+            if verbose: print("setting epdb_flag to", newvalue)
+            kw['epdb_flag'] = 1
+        elif 'flag' in key:
+            if verbose: print("key=", key, ' newvalue=', newvalue)
+            if newvalue in ['1','0']:
+                newvalue = int(newvalue)
+            if newvalue =='False':
+                newvalue = False
+            if newvalue =='True':
+                newvalue = True
+        elif local_search and 'about' in key:
+            kw['about'] = newvalue
+            kw['tran0'] = newvalue
+        else:
+            kw[key] = newvalue
+            if verbose: print("set ", key, " to ", newvalue)
+        if verbose: print("calling set_docking_parameters with kw=", kw)
+        dm.set_docking_parameters(*(), **kw)
+        if key not in parameter_list:
+            #special hacks for output_pop_file,set_sw1,...
+            if key=='output_pop_file':
+                parameter_list.insert(parameter_list.index('set_ga'), key)
+            elif key=='set_sw1':
+                parameter_list.insert(parameter_list.index('ls_search_freq')+1, key)
+            else:
+                parameter_list.append(key)
+    if about_root_atoms_only:
+        lines = dm.ligand.parser.allLines
+        for ix, lll in enumerate(lines):
+            if lll.find("ROOT")==0:
+                root_ix = ix
+            if lll.find("ENDROOT")==0:
+                endroot_ix = ix
+                break
+        last_ix = endroot_ix - (root_ix + 1) #47-(18+1)
+        crds = dm.ligand.allAtoms[0:last_ix].coords
+        about = (numpy.add.reduce(crds)/float(len(crds))).tolist()
+        dm.dpo['about']['value'] = (round(about[0],3), round(about[1],3), round(about[2],3))
+    if epdb_output:
+        dm.dpo['epdb_flag']['value'] = 1
+        dm.write_dpf(dpf_filename, parm_list=epdb_list4_2)
+    else:
+        if verbose: print("not epdb_output")
+        dm.write_dpf(dpf_filename, parameter_list, pop_seed=pop_seed)
 
 if __name__ == '__main__':
     from pathlib import Path
-    receptor = 'C:\\Users\\o_o\\Documents\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\03_docking_tutorial\\data\\receptor_3b2x.pdb'
-    ligand = 'C:\\Users\\o_o\\Documents\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\03_docking_tutorial\\data\\lig_3b2x.mol2'
+    # receptor = 'C:\\Users\\o_o\\Documents\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\03_docking_tutorial\\data\\receptor_3b2x.pdb'
+    # receptor = "rec_3ebh-prep.pdbqt"
+    # outreceptor = 'receptor_3b2x.pdbqt'
+    # ligand = 'C:\\Users\\o_o\\Documents\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\03_docking_tutorial\\data\\lig_3b2x.mol2'
+    # ligand = "lig_3ebh-prep.pdbqt"
+    # outligand = 'lig_3b2x.pdbqt'
     # outputfilename = 'C:\\Users\\o_o\\Documents\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\03_docking_tutorial\\data\\lig_3b2x.pdbqt'
-    prepare_receptor4(receptor, verbose=True)
-    # prepare_ligand4(ligand,verbose=True,charges_to_add=None)#, outputfilename=outputfilename)
+    # prepare_receptor4(receptor, verbose=True, outputfilename=outreceptor)
+    # prepare_ligand4(ligand,verbose=True,charges_to_add=None, outputfilename=outligand)
+    # prepare_gpf4(receptor_filename=receptor, ligand_filename = ligand, verbose=1,output_gpf_filename='here.gpf')
+    # prepare_gpf4(receptor_filename=outreceptor)
     
+
+    # python.exe "C:\Program Files (x86)\MGLTools-1.5.7rc1\Lib\site-packages\AutoDockTools\Utilities24\prepare_gpf4.py" -l C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\autodocktools_prepare_py3k\AutoDockTools\Utilities24\lig_3b2x.pdbqt -r C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\autodocktools_prepare_py3k\AutoDockTools\Utilities24\receptor_3b2x.pdbqt -o C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\file.gpf
+    # python.exe "C:\Program Files (x86)\MGLTools-1.5.7rc1\Lib\site-packages\AutoDockTools\Utilities24\prepare_dpf42.py" - l C: \Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\lig_3b2x.pdbqt - r C: \Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\receptor_3b2x.pdbqt - o C: \Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\lig_3b2x_receptor_3b2x.dpf
+    # prepare_dpf42(receptor_filename=receptor,ligand_filename=ligand)

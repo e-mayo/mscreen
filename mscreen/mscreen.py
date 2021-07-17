@@ -28,9 +28,9 @@ def pareser():
             "-d",
             "--docking_program",
             metavar="docking_program",
-            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock"],
+            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock","autodock"],
             type=str,
-            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina', 'plants', 'dock'. Default vina ",
+            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina',' autodock', 'plants', 'dock'. Default vina ",
             default="vina",
             required=False,)
         

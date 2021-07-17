@@ -2,5 +2,9 @@
 !/data/config*
 !data/receptor/
 !data/ligands/
+mscreen/.pylint.d
+mscreen/.spyproject
+mscreen/.vscode
+mscreen/__pycache__
 
 
