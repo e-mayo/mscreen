@@ -23,8 +23,14 @@ def prepare_autodock42_parameter_file(receptor_filename, ligand_filename,dpf_fil
     This function call the python wrapper in AutodockTools/Utils24/prepare4 for prepare_dpf42.py script.
     It prepare the dpf file for autodock4.
     """
+
+    if not dpf_filename:
+        dpf_filename = receptor_filename.parent / f"{ligand_filename.stem}_{receptor_filename.stem}.dpf"
+    
     receptor_filename = str(receptor_filename)
-    ligand_filename = str(ligand_filename)
+    ligand_filename = str(ligand_filename)     
+    dpf_filename = str(dpf_filename)
+    
     if dpf_filename:
         dpf_filename = str(dpf_filename)
     prepare_dpf42(receptor_filename=receptor_filename, ligand_filename=ligand_filename,dpf_filename=dpf_filename, **kwargs)

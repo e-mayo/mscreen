@@ -10,11 +10,16 @@ import re
 import sys
 from pathlib import Path
 from shutil import copy, rmtree, which
+
 from time import time
 
 from multiprocess.utils import count_processors, multi_threading
 
-from screening import prepare_autodock, prepare_dock, prepare_vina
+from screening import prepare_autodock
+from screening import prepare_dock
+from screening import prepare_vina
+from screening import prepare_autodockzn
+
 from screening.config import reader, writer
 from screening.utils import rename_old
 
@@ -708,6 +713,8 @@ class VinaScreening(Screening):
     # def set_metalloprotein_charge(self,atomname,charge):
     # pass
 
+
+
 class AutoDockScreening(Screening):
     def prepare_receptors(self):
         """
@@ -815,16 +822,16 @@ class AutoDockScreening(Screening):
     def generate_autodocks_files(self, rec, lig, list_dpf_parameters=None):
         # list_gpf_parameters = []
         
-        import shutil
+        
         out_folder = self.out_folder / rec.stem / lig.stem
         output_gpf_filename = out_folder / f"{rec.stem}-{lig.stem}.gpf"
         log_filename = out_folder / f"{rec.stem}-{lig.stem}.log"
         
-        prepare_autodock.prepare_grid_parameter_file(receptor_filename=rec,
+        prepare_autodockzn.prepare_gpf4zn(receptor_filename=rec,
                                                     ligand_filename=lig,
                                                     output_gpf_filename=output_gpf_filename)
 
-        prepare_autodock.run_autogrid(parameter_filename=output_gpf_filename, log_filename=None)
+        prepare_autodockzn.run_autogrid(parameter_filename=output_gpf_filename, log_filename=None)
         dpf_filename = out_folder / f"{rec.stem}-{lig.stem}.dpf"
         
         prepare_autodock.prepare_autodock42_parameter_file(receptor_filename=rec,
@@ -833,6 +840,132 @@ class AutoDockScreening(Screening):
                                         dpf_filename=dpf_filename)
         return dpf_filename
 
+
+class AutoDockZnScreening(AutoDockScreening):
+    
+    def prepare_receptors(self):
+        """
+        This function prepare receptors for autodock4 (SAME AS VINA)
+        """
+        receptors_prepared = []
+        for rec in self.receptors:
+            # pdb,mol2,pdbq,pdbqs,pdbqt, possibly pqr,cif
+            if not self._check_format_(rec):
+                continue
+            if self.verbose:
+                print(f"\n\npreparing receptor {rec.name}")
+            kwargs = {"verbose": True}
+            out = self.prepared_receptors_folder / f"{rec.stem}.pdbqt"
+            out = prepare_autodockzn.prepare_receptor_autodockzn(rec, out, **kwargs)
+            receptors_prepared.append(out)
+        self.receptors = receptors_prepared
+    
+    # def prepare_ligands(self):
+    #     """
+    #     This function prepare ligands for autodock pretty the same as vina
+    #     """
+    #     ligands_prepared = []
+    #     for lig in self.ligands:
+    #         # .pdb .mol2 or .pdbqt
+    #         if not self._check_format_(lig):
+    #             continue
+    #         if self.verbose:
+    #             print(f"\n\npreparing ligand {lig.name}")
+    #         # self.fix_multiplefragment(lig)
+    #         kwargs = {"verbose": True}
+    #         out = self.prepared_ligand_folder / f"{lig.stem}.pdbqt"
+    #         prepare_autodock.prepare_ligand_autodock(lig, out, **kwargs)
+    #         ligands_prepared.append(out)
+    #     self.ligands = ligands_prepared
+
+    # def prepare_screening(self):
+    #     """
+    #     Look into receptors folder and ligands folder and prepare each
+    #     file for docking. This use a modification of prepare_ligand4
+    #     and prepare_receptor4 so they can be called as functions.
+
+    #     Parameters
+    #     ----------
+    #     verbose : bool, optional
+    #         Print what its doing. The default is False.
+
+    #     Returns
+    #     -------
+    #     None.
+
+    #     """
+    #     self.SUPPORTED_FORMATS = (
+    #         ".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
+    #     self.prepared_folder(folder_name="autodock_zn")
+    #     self.prepare_receptors()
+    #     self.prepare_ligands()
+    
+    
+    # def run_autodock(self, parameter_filename, log_filename=None,
+    #                 keep_original_residue=False,
+    #                 ignore_header_checking=False):
+
+    #     prepare_autodock.run_autodock(parameter_filename, log_filename=log_filename,
+    #                                 keep_original_residue=False,
+    #                                 ignore_header_checking=False)
+    
+    # def run_screening(self, init_screening=True):
+
+    #     self.logger("#" * 72)
+    #     self.logger(f"#Running virtual screening using {self.docking_program}")
+    #     self.logger("#" * 72)
+
+    #     if init_screening:
+    #         self.init_screening()
+
+    #     if self.prepare:
+    #         self.logger("#Preparing ligand and receptors")
+    #         self.prepare_screening()
+
+    #     for rec in self.receptors:
+    #         if rec.suffix != ".pdbqt":
+    #             continue
+    #         for lig in self.ligands:
+    #             if lig.suffix != ".pdbqt":
+    #                 continue
+    #             self.logger(f"#Docking {lig.name} in {rec.name}")
+    #             #                if os.listdir(self.ligand_folder).index(lig) <= x:
+    #             #                    continue
+    #             out_folder = self.out_folder / rec.stem / lig.stem
+    #             os.mkdir(out_folder)
+    #             t0 = time()
+                
+    #             dpf_filename = self.generate_autodocks_files(rec, lig,
+    #                                  list_dpf_parameters=["ga_run=10","ga_num_evals=2500"])
+    #             # self.run_autodock(dpf_filename, 
+    #             #                   keep_original_residue=False,
+    #             #                   ignore_header_checking=False)
+    #             self.run_autodock(parameter_filename=dpf_filename,
+    #                               keep_original_residue=False,
+    #                               ignore_header_checking=False)
+    #             self.logger(
+    #                 f"{self.docking_program},{rec.stem},{lig.stem},{time()-t0:.2f}")
+                
+    def generate_autodocks_files(self, rec, lig, list_dpf_parameters=None):
+        # list_gpf_parameters = []
+        
+        
+        out_folder = self.out_folder / rec.stem / lig.stem
+        output_gpf_filename = out_folder / f"{rec.stem}-{lig.stem}.gpf"
+        log_filename = out_folder / f"{rec.stem}-{lig.stem}.log"
+        
+        
+        prepare_autodockzn.prepare_grid_parameter_file(ligand_filename=lig,
+                                    receptor_filename=rec,
+                                    output_gpf_filename=output_gpf_filename)
+        prepare_autodock.run_autogrid(parameter_filename=output_gpf_filename, log_filename=None)
+        dpf_filename = out_folder / f"{rec.stem}-{lig.stem}.dpf"
+        
+        prepare_autodock.prepare_autodock42_parameter_file(receptor_filename=rec,
+                                        ligand_filename=lig,
+                                        list_parameters_str=list_dpf_parameters,
+                                        dpf_filename=dpf_filename)
+        return dpf_filename
 
 class PlantsScreening(Screening):
     def prepare_screening(self):
@@ -1203,6 +1336,7 @@ vsprotocol.register_program("qvina-w", VinaScreening)
 vsprotocol.register_program("smina", VinaScreening)
 
 vsprotocol.register_program("autodock", AutoDockScreening)
+vsprotocol.register_program("autodockzn", AutoDockZnScreening)
 
 vsprotocol.register_program("plants", PlantsScreening)
 vsprotocol.register_program("ledock", LedockScreening)
@@ -1463,4 +1597,33 @@ if __name__ == "__main__":
         # s.get_docking_executable("DOCK")
         s.run_screening()
 
-    test_AUTODOCK() 
+    # test_AUTODOCK() 
+    # =============================================================================
+    # Test AUTODOCK ZN
+    # =============================================================================    
+    def test_AUTODOCK_ZN():
+        ligands = Path("../../data/ligands")
+        receptors = Path("../../data/receptors")
+        ligands = Path("../../data/prepare/prepared_ligands_autodock")
+        receptors = Path("../../data//prepare/prepared_receptors_autodock")
+        # ligands = Path("../../data/prepare/prepared_ligands_dock")
+        # receptors = Path("../../data/prepare/prepared_receptors_dock")
+        out = Path("../../data/out-autodockzn")
+        conf = Path("../../data/config_dock_flex_sample.txt")
+        docking_program = "autodockzn"
+        prepare = False
+        s = AutoDockZnScreening(
+            ligands, receptors, out, conf=conf, docking_program=docking_program, verbose=True, prepare=prepare, exe_file="../exe.paths"
+        )
+        # s.init_screening()
+        # s.prepared_folder('DOCK')
+        # s.prepare_ligands()
+        # s.prepare_receptors()
+        # s.prepare_screening()
+        # i = [l for l in ligands.iterdir()][0]
+        # o = i.parent / f"{i.stem}-prep.mol2"
+        # s.run_spores(i, o)
+        # s.get_docking_executable("DOCK")
+        s.run_screening()
+
+    test_AUTODOCK_ZN() 

@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = empty-project-type
-recent_files = ['screening\\screen.py', 'mscreen.py', 'screening\\dock_files.py', 'screening\\pdb_utils.py', 'screening\\prepare_autodock.py', 'autodocktools_prepare_py3k\\autodocktools\\utilities24\\prepare4.py']
+recent_files = ['screening\\screen.py', 'screening\\prepare_autodockzn.py', 'screening\\prepare_autodock.py', 'screening\\zinc_pseudo.py', 'mscreen.py', '..\\..\\..\\..\\..\\..\\miniconda3\\envs\\chem_lab\\lib\\pathlib.py']
 
 [main]
 version = 0.2.0

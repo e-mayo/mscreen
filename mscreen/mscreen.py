@@ -28,9 +28,9 @@ def pareser():
             "-d",
             "--docking_program",
             metavar="docking_program",
-            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock","autodock"],
+            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock","autodock","autodockzn"],
             type=str,
-            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina',' autodock', 'plants', 'dock'. Default vina ",
+            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina',' autodock', 'plants', 'dock', 'autodockzn'. Default vina ",
             default="vina",
             required=False,)
         
@@ -262,5 +262,5 @@ class TestMscreen:
 
 # TestMscreen.test_prepare(docking_program='dock') 
 # TestMscreen.test_screen_prepare_on(docking_program='dock')
-# TestMscreen.test_screen_prepare_off(docking_program='dock')
+# TestMscreen.test_screen_prepare_off(docking_program='autodockzn')
 

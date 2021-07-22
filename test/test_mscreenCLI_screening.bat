@@ -12,8 +12,14 @@ echo "##############################################"
 @REM python mscreen.py screen -l ../data/prepare/prepared_ligands_autodock -r ../data/prepare/prepared_receptors_autodock -o ../data/out-test-autodock  -log ../data/test_autodock.log -d autodock -v 
 @REM echo SCREEN AUTODOCK OK
 
-echo TESTING FULL SCREEN AUTODOCK
-python mscreen.py screen -l ../data/ligands -r ../data/receptors -o ../data/out-test-autodock  -log ../data/test_autodock.log -d autodock -v -p
-echo SCREEN AUTODOCK OK
+@REM echo TESTING FULL SCREEN AUTODOCK
+@REM python mscreen.py screen -l ../data/ligands -r ../data/receptors -o ../data/out-test-autodock  -log ../data/test_autodock.log -d autodock -v -p
+@REM echo SCREEN AUTODOCK OK
 
+@REM echo TESTING FULL SCREEN AUTODOCK ZN
+@REM python mscreen.py screen -l ../data/ligands -r ../data/receptors -o ../data/out-test-autodockzn  -log ../data/test_autodockzn.log -d autodockzn -v -p
+@REM echo SCREEN AUTODOCK ZN
 
+echo TESTING FULL SCREEN AUTODOCK ZN
+python mscreen.py screen -l ../data/prepare/prepared_ligands_autodock -r ../data/prepare/prepared_receptors_autodock -o ../data/out-test-autodockzn  -log ../data/test_autodockzn.log -d autodockzn -v 
+echo SCREEN AUTODOCK ZN

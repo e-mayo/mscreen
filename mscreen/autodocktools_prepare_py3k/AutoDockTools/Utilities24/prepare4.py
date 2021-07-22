@@ -292,6 +292,7 @@ def prepare_receptor4(receptor_filename,
     """
     ### Initialize the function parameters as in the prepare_receptor4.py script
     if receptor_filename:
+        receptor_filename = str(receptor_filename)
         if verbose: print('set receptor_filename to ', receptor_filename)
     if verbose:
         verbose = True
