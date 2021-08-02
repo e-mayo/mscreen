@@ -1,2 +1,3 @@
 bash test_mscreenCLI_prepare.sh
 bash test_mscreenCLI_screening.sh
+bash test_mscreenCLI_analysis.sh

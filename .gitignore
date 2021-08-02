@@ -16,3 +16,5 @@ __pycache__/
 !/data/config*
 !data/receptor/
 !data/ligands/
+
+*bad.mol2
