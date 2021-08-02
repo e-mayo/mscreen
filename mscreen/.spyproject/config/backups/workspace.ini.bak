@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = empty-project-type
-recent_files = ['..\\..\\..\\..\\..\\..\\.spyder-py3\\temp.py', 'screening\\run_dock6.py', 'screening\\screen.py', 'mscreen.py', 'screening\\dock_files.py', 'screening\\pdb_utils.py']
+recent_files = ['..\\..\\..\\..\\..\\..\\.spyder-py3\\temp.py', '..\\..\\..\\..\\..\\research\\postgrad\\SOAN-UH\\E.Coli_P.Falsiparum\\structures\\prepare_proteins_with_prepwizard.py']
 
 [main]
 version = 0.2.0

@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignore cache files from Python
+*.pyc
+*__pycache__
+
+*__pycache__/*
+
 # C extensions
 *.so
 
@@ -10,5 +16,3 @@ __pycache__/
 !/data/config*
 !data/receptor/
 !data/ligands/
-
-
