@@ -5,6 +5,7 @@ import sys, os
 import numpy as np
 from pathlib import Path
 from shutil import which
+import subprocess
 
 sys.path.append(str(Path(sys.path[0]).parent)) #uncomment when working in this file
 from screening.pdb_utils import extract_near_residues_as_pdb
@@ -16,9 +17,12 @@ import screening.lig_unique_name as lig_unique_name
 def dockprep_chimera(mol_file, mol_out=None):
     if not mol_out:
         mol_out = f"{mol_file.split('.')[0]}_prep.mol2"
-    DOCKPREP_HOME = Path(__file__).parent / 'dockprep.py'
-    command = f"chimera.exe --nogui {mol_file} 'dockprep.py' {mol_out}"
-    os.system(command)
+    # DOCKPREP_HOME = Path(__file__).parent / 'dockprep.py'
+    DOCKPREP_HOME = 'dockprep.py'
+    command = f"chimera.exe --nogui {mol_file} dockprep.py {mol_out}"
+    # command = ["chimera.exe","--nogui",f"{mol_file}","dockprep.py", f"{mol_out}"]
+    # subprocess.run(command) #os.system fail
+    os.system(command) #now subprocess.run is failing
     
 
 def prepare_receptor_dock(rec_file, lig_file, sph_selector_cut_off = 10.0, ref=None, out_folder = None):
@@ -43,6 +47,7 @@ def prepare_receptor_dock(rec_file, lig_file, sph_selector_cut_off = 10.0, ref=N
 
         if not ref:
             ref = ref_center = calc_mol_center(lig_file)
+            # ref = [10.15, 10.08, 4.02]
         
         # sometimes dock file when atoms id go beyond 9999 or residues id go beyond 999
         # this extract a proteing fragment [frag_name]
@@ -349,20 +354,20 @@ def prepare_ligand_dock(lig_file,out_file=None):
 if __name__ == "__main__":
     from time import time
     
-    
-    lig_file = "../data/ligands/lig_3ebh.mol2"
-    out_file = "../data/prepare/rec_3ebh.mol2"
+
+    lig_file = "../../data/ligands/lig_3ebh.mol2"
+    out_file = "../../data/prepare/rec_3ebh.mol2"
     # prepare_ligand_dock(lig_file, out_file)
     
-    rec_file = "../data/receptor/rec_3ebh.pdb"
+    rec_file = "../../data/receptors/rec_3ebh.pdb"
     rec_name = rec_file.split()[0]
     prep_rec_name = f'{rec_name}-prep.pdb'
     t0 = time()
     dockprep_chimera(rec_file, prep_rec_name)
     print(f'dockprep rec preparation time {time()-t0}')
-    
+    prep_rec_name = "prep123456.pdb"
     t0 = time()
-    out_folder="../data/prepare/"
+    out_folder="../../data/prepare/"
     prepare_receptor_dock(rec_file, lig_file, sph_selector_cut_off=10.0, out_folder=out_folder)
     print(f'prepare_receptor_dock rec preparation time {time()-t0}')
     

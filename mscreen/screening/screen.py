@@ -474,8 +474,8 @@ class DOCKScreening(Screening):
             # prepare_dock.dockprep_chimera(rec, out)
             
             # generating required file for docking (dms, sph, grid)
-            prepare_dock.prepare_receptor_dock(rec,
-                                               self.ligands[0],
+            prepare_dock.prepare_receptor_dock(rec_file = rec,
+                                               lig_file = self.ligands[0],
                                                out_folder = self.prepared_receptors_folder,
                                                sph_selector_cut_off=10.0,
                                                ref=None)     
