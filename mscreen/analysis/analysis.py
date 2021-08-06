@@ -12,6 +12,7 @@ from pathlib import Path
 import Analysis.LogFile as LogFile
 import Analysis.engine as engine
 import numpy as np
+import re
 from rdkit import Chem
 
 
@@ -309,7 +310,242 @@ class VinaAnalysis(Analysis):
             lig_mol_list.append(mol)
         return lig_mol_list
 
+
+class AutodockAnalysis(Analysis):
     
+    def run_short_analysis(self, output_nam="result.txt"):
+        for rec in self.input_path.iterdir():
+            if not rec.is_dir():continue
+            print(rec.name)
+            self.screening_result_txt(rec)
+                
+    def screening_result_txt(self, receptor_path, output_name="result.txt"):
+        receptor_path = Path(receptor_path)
+        screened_molecules = {}
+        screened_molecules[receptor_path.name] = []
+        ligands_path = [l for l in receptor_path.iterdir() if l.is_dir()]
+
+        results, ligandCode = self.get_ligand_result(ligands_path)
+        out_file = self.input_path / f'screeining_result_rec_{receptor_path.name}.txt'
+        self.writeResults(results, ligandCode, out_file)
+    
+
+    def run_full_analysis(self):
+        """
+        Search into each receptor folder
+        and read all ligands-out.pdbqt convert them to sdf
+        then perfom a qt clustering of the poses using the rms
+        """
+        for rec in self.input_path.iterdir():
+            if not rec.is_dir():continue
+            if self.is_empty(rec):continue
+            print(rec.name)
+            self.screeining_result_sdf(rec)
+                
+    def screeining_result_sdf(self, receptor_path):
+        receptor_path = Path(receptor_path)
+        screened_molecules = {}
+        screened_molecules[receptor_path.name] = []
+        threashold = 2
+        # site = np.array([10.2, 42.7, 40.8])
+        radius = 1.5
+        # sdf_propierties = ["file_name", "vina_pose", "vina_score", "cluster_id", "clust_lenght", "best_pose", "in_site"]
+        sdf_propierties = ["_Name","pose",
+                         "Estimated Free Energy of Binding",
+                         "Intermolecular Energy",
+                         "vdW + Hbond + desolv Energy",
+                         "Electrostatic Energy",
+                         "Total Internal Energy",
+                         "Torsional Free Energy",
+                         "Unbound Energy"]
+        
+        ligands_paths = [l for l in receptor_path.iterdir() if l.is_dir()]
+        for ligand_path in ligands_paths:
+            if self.is_empty(ligand_path):continue
+            temp_pdbqt = self.dlg2sdf(ligand_path)
+            lig_result = self.pdbqt2sdf(temp_pdbqt)
+            lig_result = engine.qt_cluster_a_mol_list(lig_result, threashold)
+            # lig_result = engine.get_representative_clust(lig_result,key_energy='vina_score')
+            for mol in lig_result:
+                # engine.find_mol_within_site_square(mol, site, radius, 3)
+                screened_molecules[receptor_path.name].append(mol)
+        sdf_name = receptor_path.parent / "screeining_result_rec_{}".format(receptor_path.name)
+        self.write_sdf(sdf_name, screened_molecules[receptor_path.name], write_props=sdf_propierties)
+    
+    
+    def get_log_file(self,filepath):
+        log_name = None
+        for file in filepath.iterdir():
+            if 'dlg' in file.name:
+                log_name = file
+        return log_name
+    
+    def get_ligand_result(self, ligands_path):
+        totalLigands = len(ligands_path)
+        results = np.zeros((len(ligands_path), 4))
+        ligandCode = dict()
+        for l, j in zip(ligands_path, range(totalLigands)):
+            # seems to be the same as for l in enumerate(ligand):
+            # use l[0] as j and l[1] as l
+            # if l / 
+            log_name = self.get_log_file(l)
+            if not log_name: continue
+            ligData = LogFile.AutodockLogFile(log_name)
+            print(j, l.name)
+            ligandCode[j] = l.name
+            results[j][0] = j
+            results[j][1] = ligData.best
+            results[j][2] = ligData.ave3
+            results[j][3] = ligData.ave
+            ndxSorted = results[:, 1].argsort()
+            results = results[ndxSorted]
+        return results, ligandCode       
+ 
+    def dlg2sdf(self,ligand_path):
+        """
+        convert a docking log file (.dlg) to sdf
+        Parameters
+        ----------
+        ligand_path : Path
+            the ligand folder path.
+
+        Returns
+        -------
+        lig_mol_list : List
+            list of Chem.Mol containing all ligands poses
+
+        """
+
+        lig_name = ligand_path.parents[0].name
+        rec_name = ligand_path.parents[1].name
+        dlg_file = ligand_path / f"{rec_name}-{lig_name}.dlg"
+        
+        if not dlg_file.exists():
+            dlg_file = self.get_log_file(ligand_path)
+        
+        # props = ["Estimated Free Energy of Binding",
+        #          "Intermolecular Energy",
+        #          "vdW + Hbond + desolv Energy",
+        #          "Electrostatic Energy",
+        #          "Total Internal Energy",
+        #          "Torsional Free Energy",
+        #          "Unbound Energy"]
+        with open(dlg_file) as f:
+            lines = f.readlines()
+            
+        temp_pdbqt = ligand_path / "temp.pdbqt"
+        with open(temp_pdbqt,"w") as f:
+            for line in lines:
+                if not line.startswith("DOCKED"): continue
+                f.write(line.replace("DOCKED: ", ""))
+        return temp_pdbqt
+            
+            
+        
+        
+    
+    def pdbqt2sdf(self, ligand_path):
+        """
+        convert a ligand from pdbqt to sdf
+        Parameters
+        ----------
+        ligand_path : Path
+            the ligand folder path.
+
+        Returns
+        -------
+        lig_mol_list : List
+            list of Chem.Mol containing all ligands poses
+
+        """
+        ligand_file = ligand_path
+        
+    
+        if not ligand_file.exists():
+            return []
+        
+        sdf_file = ligand_file.parent / (ligand_file.parent.name + "_rdkit.sdf")
+                    
+        # its required a pdbqt2sdf wrapper for drop this dependecy
+        command = f"obabel -ipdbqt {ligand_file} -osdf -O {sdf_file} ---errorlevel 0"
+        if not sdf_file in (ligand_path.parent).iterdir():
+            # os.popen(command).read
+            os.system(command)
+        # os.popen run the program externally
+        # and python flow continue and may crash
+        lig_mol_list = self.sdf2mol_list(sdf_file)
+        return lig_mol_list
+
+    
+
+    def sdf2mol_list(self, sdf_file):
+        """
+        Read a sdf file converted from vina pdbqt.
+
+        and do some stuff
+
+        Input:
+        ------
+        sdf_file: name of the sdf file
+
+        Return:
+        ------
+        lig_mol_list :a list of the molecules in the sdf_file storing the
+        _Name, vina_pose, vina_score
+        """
+        
+        sdf_file = Path(sdf_file)
+        if not sdf_file.exists():
+            return []
+        
+        lig_mol_list = []
+        # sdf_file = dlg_file.parents[0] / sdf_file
+        for index, mol in enumerate(Chem.SDMolSupplier(str(sdf_file), sanitize=False, removeHs=False)):
+            name = sdf_file.name
+            mol.SetProp("_Name", name)
+            try:
+                pose = mol.GetProp("MODEL")
+            except KeyError:
+                pose = index + 1
+            #            print('MODEL error at {}'.format(str(sdf_file)))
+            try:
+                mol.SetProp("pose", str(pose))
+                mol.SetProp("file_name", str(sdf_file.stem))
+                pdbqtUSER = mol.GetProp("USER")
+                
+                props_dict = {}
+                props = ["Estimated Free Energy of Binding",
+                         "Intermolecular Energy",
+                         "vdW + Hbond + desolv Energy",
+                         "Electrostatic Energy",
+                         "Total Internal Energy",
+                         "Torsional Free Energy",
+                         "Unbound Energy"]
+                for line in pdbqtUSER.split('\n'):
+                    for prop in props:
+                        if prop in line:
+                            m = re.search("=\s+(.+?)\s", line)        
+                            print()
+                            props_dict.setdefault(prop,m.groups()[0]) 
+                for key, val in props_dict.items():
+                    mol.SetProp(key, val)
+                                    #                        AllChem.SanitizeMol(mol)
+            except KeyError:
+                pass
+            Chem.SanitizeMol(
+                mol,
+                Chem.SanitizeFlags.SANITIZE_FINDRADICALS
+                | Chem.SanitizeFlags.SANITIZE_KEKULIZE
+                | Chem.SanitizeFlags.SANITIZE_SETAROMATICITY
+                | Chem.SanitizeFlags.SANITIZE_SETCONJUGATION
+                | Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION
+                | Chem.SanitizeFlags.SANITIZE_SYMMRINGS,
+                catchErrors=True,
+            )
+            lig_mol_list.append(mol)
+        return lig_mol_list
+
+
 class PlantsAnalysis(Analysis):
     
     def run_short_analysis(self, output_nam="result.txt"):
@@ -550,6 +786,8 @@ class AnalysisFactory:
 vsanalyser = AnalysisFactory()
 vsanalyser.register_analyzer('vina', VinaAnalysis)
 vsanalyser.register_analyzer('plants', PlantsAnalysis)
+vsanalyser.register_analyzer('autodock', AutodockAnalysis)
+vsanalyser.register_analyzer('autodockzn', AutodockAnalysis)
 #%%
 if __name__=='__main__':    
     # a = VinaAnalysis('../data/out-test-vina_ex1',

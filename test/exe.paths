@@ -1,6 +1,0 @@
-#vina=/mnt/c/Users/o_o/Documents/PythonProjects/02_chemioinformatics/00_programs/mscreen/mscreen/screening/docking_executable/win/vina.exe
-#plants=/mnt/c/Users/o_o/Documents/PythonProjects/02_chemioinformatics/00_programs/mscreen/mscreen/screening/docking_executable/win/plants.exe
-#spores=/mnt/c/Users/o_o/Documents/PythonProjects/02_chemioinformatics/00_programs/mscreen/mscreen/screening/docking_executable/win/spores.exe
-vina=C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\docking_executable\win\vina.exe
-plants=C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\docking_executable\win\plants.exe
-spores=C:\Users\o_o\Documents\PythonProjects\02_chemioinformatics\00_programs\mscreen\mscreen\screening\docking_executable\win\spores.exe

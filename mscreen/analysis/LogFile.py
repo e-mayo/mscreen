@@ -7,6 +7,7 @@ Created on Fri Aug 21 17:18:00 2020
 
 import numpy as np
 from pathlib import Path
+import re
 
 
 
@@ -81,6 +82,7 @@ class VinaLogFile(LogFile):
             pass
         # try:
 #        print(self.filepath.name)
+        
         if 'Writing output ... done.\n' not in lines:
             self.best = np.nan
             self.ave3 = np.nan
@@ -96,6 +98,51 @@ class VinaLogFile(LogFile):
         self.best = self.data[0]
         self.ave3 = self.data[:3].mean()
         self.ave = self.data.mean()
+        
+
+class AutodockLogFile(LogFile):
+ 
+    def __init__(self,filepath):
+
+        self.logPath = filepath
+        try:
+            self.GetData()
+        except UnicodeDecodeError:
+            print('{} UnicodeDecodeError'.format(self.logPath.name))
+    
+    def GetData(self):
+        lines = []
+        # try:
+        lines = self.readLog()
+        # except:
+            # pass
+        self.is_file_ok = True
+        # try:
+#        print(self.filepath.name)
+        scores = []
+        for line in lines:
+            if "Estimated Free Energy of Binding" in line:
+                m = re.search("=\s+(.+?)\s", line)        
+                scores.append(m.groups()[0])
+                
+        if not scores :
+            self.best = np.nan
+            self.ave3 = np.nan
+            self.ave = np.nan
+            self.is_file_ok = False
+            return 'log file is not completed'
+        
+        
+        conformers_number = len(scores)
+        self.data = np.zeros(conformers_number)
+        for i in range(conformers_number):
+            self.data[i] = float(scores[i])
+        self.data.sort()
+        self.best = self.data[0]
+        self.ave3 = self.data[:3].mean(axis=0)
+        self.ave = self.data.mean(axis=0)
+
+
         
 class PlantsLogFile(LogFile):
  
