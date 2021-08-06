@@ -12,7 +12,7 @@ from pathlib import Path
 
 class LogFile:
     def __init__(self,filepath):
-        pass
+        raise NotImplementedError
     
     def readLog(self):        
         with open(self.logPath, 'r') as log:
@@ -38,6 +38,73 @@ class LogFile:
         self.best = self.data[0]
         self.ave3 = self.data[:3].mean()
         self.ave = self.data.mean()
+
+
+class DockLogFile(LogFile):
+    
+    def __init__(self, logPath):
+        self.logPath = logPath
+        try:
+            self.GetData()
+        except UnicodeDecodeError:
+            print('{} UnicodeDecodeError'.format(self.logPath.name))
+    
+    def get_mol_props(text):
+        mols_props = []
+        mol_props = {}
+        for line in text.split('\n'):
+            if line.startswith("@<TRIPOS>MOLECULE"):
+                mols_props.append(mol_props)
+                mol_props = {}
+            if not line.startswith('##########'): continue
+            prop = line.replace('##########','').split(':')
+            mol_props.setdefault(prop[0].strip(),prop[1].strip())
+            
+        return mols_props
+
+    def GetData(self):
+        lines = []
+        # try:
+        lines = self.readLog()
+        # except:
+            # pass
+        self.is_file_ok = True
+        # try:
+#        print(self.filepath.name)
+        
+        mols_props = []
+        mol_props = {}
+        for line in lines:
+            if line.startswith("@<TRIPOS>MOLECULE"):
+                mols_props.append(mol_props)
+                mol_props = {}
+            if not line.startswith('##########'): continue
+            prop = line.replace('##########','').split(':')
+            mol_props.setdefault(prop[0].strip(),prop[1].strip())
+            
+        headers = lines[0]
+        headers = headers.replace('\n', '')
+        headers = headers.split(',')
+
+        scores = []
+        for mol_props in mols_props:
+            for key, value in mol_props.items():
+                if "Score" in key:
+                    scores.append(float(value))
+
+        if not scores :
+            self.best = np.nan
+            self.ave3 = np.nan
+            self.ave = np.nan
+            self.is_file_ok = False
+            return 'log file is not completed'
+        
+        
+        self.data = np.array(scores)#,len(headers)))
+        self.best = self.data[0]
+        self.ave3 = self.data[:3].mean(axis=0)
+        self.ave = self.data.mean(axis=0)
+
         
 class VinaLogFile(LogFile):
     """
@@ -96,6 +163,8 @@ class VinaLogFile(LogFile):
         self.best = self.data[0]
         self.ave3 = self.data[:3].mean()
         self.ave = self.data.mean()
+
+
         
 class PlantsLogFile(LogFile):
  
@@ -145,4 +214,5 @@ class PlantsLogFile(LogFile):
 
 if __name__ == '__main__':
     print('Nothing')
+    
     
