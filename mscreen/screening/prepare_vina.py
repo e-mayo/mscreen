@@ -18,7 +18,7 @@ sys.path.append('mscreen/autodocktools_prepare_py3k')
 from AutoDockTools.Utilities24.prepare4 import prepare_ligand4, prepare_receptor4
 # os.chdir(cwd)
 
-def prepare_ligand_vina(ligand,outputfilename=None, **kwargs):
+def prepare_ligand_vina(ligand, outputfilename=None, **kwargs):
     """
     ligand_filename : str, Required
         ligand_filename (.pdb or .mol2 or .pdbq format)
@@ -142,6 +142,6 @@ def prepare_receptor_vina(receptor,outputfilename=None, **kwargs):
         return None
     return outputfilename
 
-
+# list(Path('.').absolute().parents)[-1]
 if __name__ == '__main__':
     print(__name__)

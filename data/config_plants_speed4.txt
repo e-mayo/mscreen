@@ -1,6 +1,15 @@
+<<<<<<< HEAD
 search_speed speed4              
 bindingsite_center 53.96 -19.14 38.39 
 bindingsite_radius 13.77
 cluster_rmsd 2.0                 
 cluster_structures 10            
 output_dir /folder/out                 
+=======
+search_speed speed4              
+bindingsite_center 53.96 -19.14 38.39 
+bindingsite_radius 13.77
+cluster_rmsd 2.0                 
+cluster_structures 10            
+output_dir /folder/out                 
+>>>>>>> dev

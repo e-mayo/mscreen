@@ -28,9 +28,9 @@ def pareser():
             "-d",
             "--docking_program",
             metavar="docking_program",
-            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock"],
+            choices=["fwavina", "gwovina", "ledock", "psovina", "qvina2", "qvina-w", "smina", "vina", "plants", "dock","autodock","autodockzn"],
             type=str,
-            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina', 'plants', 'dock'. Default vina ",
+            help="The docking software to use, choose one of the next 'fwavina', 'gwovina', 'ledock', 'psovina2', 'qvina2.1', 'qvina-w', 'smina', 'vina',' autodock', 'plants', 'dock', 'autodockzn'. Default vina ",
             default="vina",
             required=False,)
         
@@ -239,28 +239,52 @@ class TestMscreen:
         s.prepare_screening()
     
     @staticmethod
-    def test_screen_prepare_off(ligands="../data/prepare/prepared_ligands_",
-                    receptors="../data/prepare/prepared_receptors_",
-                    out="../data/out",
+    def test_screen_prepare_off(ligands=None,
+                    receptors=None,
+                    out=None,
                     docking_program="dock",
                     conf="../data/config_dock_flex_sample.txt"):
+        if not out:
+            out = f"../data/out-{docking_program}-screening"
+        if not ligands:
+            ligands = f"../data/prepare/prepared_ligands_{docking_program}"
+        if not receptors:
+            receptors = f"../data/prepare/prepared_receptors_{docking_program}"
+
         screening = vsprotocol.get_program(docking_program)
-        ligands = ligands + docking_program
-        receptors = receptors + docking_program
         s = screening(ligands,receptors,out,conf,docking_program=docking_program,prepare=False)
         s.run_screening()
     
     @staticmethod
     def test_screen_prepare_on(ligands="../data/ligands",
                     receptors="../data/receptors",
-                    out="../data/out",
+                    out=None,
                     docking_program="dock",
                     conf="../data/config_dock_flex_sample.txt"):
+        if not out:
+            out = f"../data/out-{docking_program}-screening-prepare"
         screening = vsprotocol.get_program(docking_program)
         s = screening(ligands,receptors,out,conf,docking_program=docking_program,prepare=True)
         s.run_screening()
+    
+    @staticmethod
+    def test_screen_analysis(vs_analyisis_outfolder,
+                             analyisis_outfolder,
+                             type_of_analysis,
+                             docking_program):
+        analyser = vsanalyser.get_analyzer(docking_program)
+        
+        a = analyser(vs_analyisis_outfolder,
+                     vs_analyisis_outfolder,
+                     type_of_analysis)
+        if type_of_analysis == 'full':
+            a.run_full_analysis()
+        if type_of_analysis  == 'short':
+            a.run_short_analysis()
 
-# TestMscreen.test_prepare(docking_program='dock') 
+# TestMscreen.test_prepare(docking_program='autodock') 
 # TestMscreen.test_screen_prepare_on(docking_program='dock')
-# TestMscreen.test_screen_prepare_off(docking_program='dock')
+# TestMscreen.test_screen_prepare_off(docking_program='autodock')
+# TestMscreen.test_screen_analysis("data/out-autodock-screening","data/out-autodock-screening","full",docking_program='autodock')
+# TestMscreen.test_screen_analysis("../data/out","../data/out","short",docking_program='autodock')
 

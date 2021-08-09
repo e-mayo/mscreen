@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 # import numpy as np
 from math import sqrt
 
@@ -323,6 +324,114 @@ def calc_mol_center(mol2_file):
             atom_xyz_list.append([coord_x, coord_y, coord_z])
     atoms = np.array(atom_xyz_list)
     return atoms.mean(axis=0)
+
+
+
+
+
+# =============================================================================
+# PDBQT related Function
+# =============================================================================
+
+def dlg2pdbqt_file(dlg_file,pdbqt_file=None,split=False):
+    """
+    This function convert dlg file from dlg to pdbqt 
+
+    Parameters
+    ----------
+    dlg_file : pathlib.Path
+        DESCRIPTION.
+    pdbqt_file : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    if not pdbqt_file:
+        pdbqt_file = Path(dlg_file).parent / f"{Path(dlg_file).stem}.pdbqt"
+        
+    with open(dlg_file,'r') as f:
+        dlg_text = f.read()
+    
+    pdbqt_text = dlg2pdbqt_text(dlg_text)
+    
+    if split:
+        models = split_pdbqt_text(pdbqt_file)
+        write_multplie_pdbqt_models(models)
+    else:
+        with open(pdbqt_file,'w') as f:
+            f.write(pdbqt_text)
+    
+    
+def dlg2pdbqt_text(dlg_text):
+    """
+    This function convert dlg text from dlg to pdbqt 
+
+    Parameters
+    ----------
+    dlg_text : str
+        DESCRIPTION.
+
+    Returns
+    -------
+    pdbqt_text : str.
+
+    """
+    docked = re.compile('DOCKED\:\s(.*\n)')
+    m = docked.findall(dlg_text)
+    pdbqt_text = ''
+    pdbqt_text = pdbqt_text.join(m)
+    return pdbqt_text
+
+
+
+def split_pdbqt_file(pdbqt_file):
+    """
+    Split a pdbqt file containing multiple models into separate models.
+
+    Parameters
+    ----------
+    pdbqt_file : pathlib.Path
+        DESCRIPTION.
+
+    Returns
+    -------
+    bool
+        Always return True.
+
+    """
+    pdbqt_file= Path(pdbqt_file)
+    
+    with open(pdbqt_file,'r') as f:
+        pdbqt_text = f.read()
+    models = split_pdbqt_text(pdbqt_text)
+    write_multplie_pdbqt_models(models,prefix=pdbqt_file)  
+          
+    return True
+
+def write_multplie_pdbqt_models(models,prefix=None):
+    if not prefix: 
+        parent = Path('.')
+        stem = Path('pdbqt_file')
+    else:
+        prefix = Path(prefix)
+        parent = prefix.parent
+        stem = prefix.stem
+        
+    for idx, m in enumerate(models):
+        new_file = parent / f"{stem}_{idx:02d}.pdbqt"
+        with open(new_file,'w') as f:
+            f.write(m)
+    return idx
+    
+def split_pdbqt_text(pdbqt_text):
+    models = pdbqt_text.split("ENDMDL")
+    for m in models:
+        m += "ENDMDL\n"
+    return models
+
 #%%
 if __name__ == '__main__':
     
