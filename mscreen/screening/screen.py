@@ -827,7 +827,7 @@ class AutoDockScreening(Screening):
         output_gpf_filename = out_folder / f"{rec.stem}-{lig.stem}.gpf"
         log_filename = out_folder / f"{rec.stem}-{lig.stem}.log"
         
-        prepare_autodockzn.prepare_gpf4zn(receptor_filename=rec,
+        prepare_autodock.prepare_grid_parameter_file(receptor_filename=rec,
                                                     ligand_filename=lig,
                                                     output_gpf_filename=output_gpf_filename)
 
