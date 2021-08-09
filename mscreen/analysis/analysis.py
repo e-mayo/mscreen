@@ -525,7 +525,6 @@ class AutodockAnalysis(Analysis):
                     for prop in props:
                         if prop in line:
                             m = re.search("=\s+(.+?)\s", line)        
-                            print()
                             props_dict.setdefault(prop,m.groups()[0]) 
                 for key, val in props_dict.items():
                     mol.SetProp(key, val)

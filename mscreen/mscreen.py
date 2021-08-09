@@ -285,6 +285,6 @@ class TestMscreen:
 # TestMscreen.test_prepare(docking_program='autodock') 
 # TestMscreen.test_screen_prepare_on(docking_program='dock')
 # TestMscreen.test_screen_prepare_off(docking_program='autodock')
-# TestMscreen.test_screen_analysis("../data/out","../data/out","full",docking_program='autodock')
+# TestMscreen.test_screen_analysis("data/out-autodock-screening","data/out-autodock-screening","full",docking_program='autodock')
 # TestMscreen.test_screen_analysis("../data/out","../data/out","short",docking_program='autodock')
 

@@ -10,14 +10,14 @@ echo ANALYSIS VINA OK
 
 echo "##############################################"
 echo TESTING ANALYSIS AUTODOCK
-python mscreen.py analysis -d plants -i ../data/out-autodock-screening -t short
-python mscreen.py analysis -d plants -i ../data/out-autodock-screening -t full
+python mscreen.py analysis -d autodock -i ../data/out-autodock-screening -t short
+python mscreen.py analysis -d autodock -i ../data/out-autodock-screening -t full
 echo ANALYSIS AUTODOCK OK
 
 echo "##############################################"
 echo TESTING ANALYSIS AUTODOCKZN
-python mscreen.py analysis -d plants -i ../data/out-autodockzn-screening -t short
-python mscreen.py analysis -d plants -i ../data/out-autodockzn-screening -t full
+python mscreen.py analysis -d autodockzn -i ../data/out-autodockzn-screening -t short
+python mscreen.py analysis -d autodockzn -i ../data/out-autodockzn-screening -t full
 echo ANALYSIS AUTODOCKZN OK
 
 
