@@ -5,6 +5,7 @@ Mscreen try to be a common user interface for different ligand-protein docking p
 1- Install python 3.7+
 2- Install rdkit
 3- Install numpy
+4- Install openbabel
 git clone https://github.com/e-mayo/mscreen.git
 
 

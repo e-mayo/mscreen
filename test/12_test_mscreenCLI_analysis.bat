@@ -4,21 +4,33 @@
 
 @REM echo '##############################################'
 echo TESTING ANALYSIS VINA
-python mscreen.py analysis -d vina   -i ../data/out-vina-screening-prepare  -t short
-python mscreen.py analysis -d vina   -i ../data/out-vina-screening-prepare  -t full
+python mscreen.py analysis -d vina   -i ../data/out-vina-screening  -t short
+python mscreen.py analysis -d vina   -i ../data/out-vina-screening  -t full
 echo ANALYSIS VINA OK
+
+echo "##############################################"
+echo TESTING ANALYSIS AUTODOCK
+python mscreen.py analysis -d plants -i ../data/out-autodock-screening -t short
+python mscreen.py analysis -d plants -i ../data/out-autodock-screening -t full
+echo ANALYSIS AUTODOCK OK
+
+echo "##############################################"
+echo TESTING ANALYSIS AUTODOCKZN
+python mscreen.py analysis -d plants -i ../data/out-autodockzn-screening -t short
+python mscreen.py analysis -d plants -i ../data/out-autodockzn-screening -t full
+echo ANALYSIS AUTODOCKZN OK
 
 
 echo "##############################################"
 echo TESTING ANALYSIS PLANTS
-python mscreen.py analysis -d plants -i ../data/out-plants-screening-prepare -t short
-python mscreen.py analysis -d plants -i ../data/out-plants-screening-prepare -t full
+python mscreen.py analysis -d plants -i ../data/out-plants-screening -t short
+python mscreen.py analysis -d plants -i ../data/out-plants-screening -t full
 echo ANALYSIS PLANTS OK
 
 echo "##############################################"
 echo TESTING ANALYSIS DOCK
-python mscreen.py analysis -d dock -i ../data/out-dock-screening-prepare -t short
-python mscreen.py analysis -d dock -i ../data/out-dock-screening-prepare -t full
+python mscreen.py analysis -d dock -i ../data/out-dock-screening -t short
+python mscreen.py analysis -d dock -i ../data/out-dock-screening -t full
 echo ANALYSIS DOCK OK
 echo "##############################################"
 

@@ -878,27 +878,27 @@ class AutoDockZnScreening(AutoDockScreening):
     #         ligands_prepared.append(out)
     #     self.ligands = ligands_prepared
 
-    # def prepare_screening(self):
-    #     """
-    #     Look into receptors folder and ligands folder and prepare each
-    #     file for docking. This use a modification of prepare_ligand4
-    #     and prepare_receptor4 so they can be called as functions.
+    def prepare_screening(self):
+        """
+        Look into receptors folder and ligands folder and prepare each
+        file for docking. This use a modification of prepare_ligand4
+        and prepare_receptor4 so they can be called as functions.
 
-    #     Parameters
-    #     ----------
-    #     verbose : bool, optional
-    #         Print what its doing. The default is False.
+        Parameters
+        ----------
+        verbose : bool, optional
+            Print what its doing. The default is False.
 
-    #     Returns
-    #     -------
-    #     None.
+        Returns
+        -------
+        None.
 
-    #     """
-    #     self.SUPPORTED_FORMATS = (
-    #         ".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
-    #     self.prepared_folder(folder_name="autodock_zn")
-    #     self.prepare_receptors()
-    #     self.prepare_ligands()
+        """
+        self.SUPPORTED_FORMATS = (
+            ".mol2", ".pdbqt", ".pdb", ".pdbqt", ".cif", ".pqr")
+        self.prepared_folder(folder_name="autodock_zn")
+        self.prepare_receptors()
+        self.prepare_ligands()
     
     
     # def run_autodock(self, parameter_filename, log_filename=None,

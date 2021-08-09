@@ -17,5 +17,4 @@ echo TESTING SCREEN dock
 python mscreen.py screen -d dock -l ../data/prepare/prepared_ligands_dock -r ../data/prepare/prepared_receptors_dock -o ../data/out-test-dock_speed4  -c ../data/config_dock_flex_sample.txt -log ../data/test_dock_flex.log -v
 echo PREPARING dock OK
 
-echo #bk dock
 

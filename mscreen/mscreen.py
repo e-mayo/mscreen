@@ -266,8 +266,25 @@ class TestMscreen:
         screening = vsprotocol.get_program(docking_program)
         s = screening(ligands,receptors,out,conf,docking_program=docking_program,prepare=True)
         s.run_screening()
+    
+    @staticmethod
+    def test_screen_analysis(vs_analyisis_outfolder,
+                             analyisis_outfolder,
+                             type_of_analysis,
+                             docking_program):
+        analyser = vsanalyser.get_analyzer(docking_program)
+        
+        a = analyser(vs_analyisis_outfolder,
+                     vs_analyisis_outfolder,
+                     type_of_analysis)
+        if type_of_analysis == 'full':
+            a.run_full_analysis()
+        if type_of_analysis  == 'short':
+            a.run_short_analysis()
 
-# TestMscreen.test_prepare(docking_program='dock') 
+# TestMscreen.test_prepare(docking_program='autodock') 
 # TestMscreen.test_screen_prepare_on(docking_program='dock')
-# TestMscreen.test_screen_prepare_off(docking_program='dock')
+# TestMscreen.test_screen_prepare_off(docking_program='autodock')
+# TestMscreen.test_screen_analysis("../data/out","../data/out","full",docking_program='autodock')
+# TestMscreen.test_screen_analysis("../data/out","../data/out","short",docking_program='autodock')
 
