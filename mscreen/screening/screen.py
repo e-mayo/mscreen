@@ -831,7 +831,7 @@ class AutoDockScreening(Screening):
                                                     ligand_filename=lig,
                                                     output_gpf_filename=output_gpf_filename)
 
-        prepare_autodockzn.run_autogrid(parameter_filename=output_gpf_filename, log_filename=None)
+        prepare_autodock.run_autogrid(parameter_filename=output_gpf_filename, log_filename=None)
         dpf_filename = out_folder / f"{rec.stem}-{lig.stem}.dpf"
         
         prepare_autodock.prepare_autodock42_parameter_file(receptor_filename=rec,
