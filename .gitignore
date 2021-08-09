@@ -1,10 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore cache files from Python
+*.pyc
+*__pycache__
+
+*__pycache__/*
+
+# C extensions
+*.so
+
 /data/*
 !/data/config*
 !data/receptor/
 !data/ligands/
-mscreen/.pylint.d
-mscreen/.spyproject
-mscreen/.vscode
-mscreen/__pycache__
-
-
